@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
@@ -175,7 +176,20 @@ namespace AiAssistant
                     Application.Current.Dispatcher.Invoke(new Action(() =>
                     {
                         NSandBoxView = new SandBoxView();
-                        string CreateCommand = "Function:" + Func.ToString() + "\r\n" + "Args:" + JsonConvert.SerializeObject(Args,Formatting.Indented);
+
+                        var ProcessedArgs = Args.Select(Arg =>
+                        {
+                            if (Arg is string S)
+                            {
+                                return S
+                                    .Replace("\\r\\n", "\r\n")
+                                    .Replace("\\n", "\n")
+                                    .Replace("\\r", "\r");
+                            }
+                            return Arg;
+                        }).ToList();
+
+                        string CreateCommand = "Function:" + Func.ToString() + "\r\n" + "Args:" + JsonConvert.SerializeObject(ProcessedArgs, Formatting.Indented);
                         NSandBoxView.SetCommand(CreateCommand);
                     }));
 

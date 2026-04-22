@@ -69,40 +69,6 @@ namespace AiAssistant.ExecuteUnit
 
         #region Code Execution
 
-        /// <summary>
-        /// Evaluates a C# expression or script synchronously and returns its result.
-        /// Returns a [ERROR] prefixed string if an exception is thrown.
-        /// </summary>
-        public object RunCode(string Code)
-    => Sandbox.Exec(nameof(RunCode), () =>
-    {
-        try
-        {
-            var References = AppDomain.CurrentDomain.GetAssemblies()
-                .Where(a => !a.IsDynamic && !string.IsNullOrEmpty(a.Location))
-                .Select(a => MetadataReference.CreateFromFile(a.Location))
-                .ToList();
-
-            var Imports = new[]
-            {
-                "System", "System.IO", "System.Linq", "System.Collections.Generic",
-                "System.Text", "System.Threading.Tasks", "System.Diagnostics"
-            };
-
-            var Options = ScriptOptions.Default
-                .WithImports(Imports)
-                .WithReferences(References);
-
-            var EvalTask = CSharpScript.EvaluateAsync<object>(Code, Options);
-            EvalTask.Wait();
-            return EvalTask.Result;
-        }
-        catch (Exception ex)
-        {
-            return $"[ERROR] {ex.Message}";
-        }
-    }, Code);
-
         public object RunCSharpCode(string Code)
         {
             return Sandbox.Exec(nameof(RunCSharpCode), () =>
@@ -125,78 +91,29 @@ namespace AiAssistant.ExecuteUnit
                         .WithReferences(References);
 
 
-                    var script = CSharpScript.Create(Code, Options);
-                    var scriptTask = script.RunAsync();
-                    scriptTask.Wait();
+                    var Script = CSharpScript.Create(Code, Options);
+                    var ScriptTask = Script.RunAsync();
+                    ScriptTask.Wait();
 
-                    return JsonConvert.SerializeObject(scriptTask.Result.ReturnValue,Formatting.Indented);
+                    if (ScriptTask.Exception != null)
+                    {
+                        throw new Exception($"[ERROR] {JsonConvert.SerializeObject(ScriptTask.Exception, Formatting.Indented)}");
+                    }
+
+                    return JsonConvert.SerializeObject(ScriptTask.Result.ReturnValue, Formatting.Indented);
                 }
                 catch (AggregateException aggEx)
                 {
-                    return $"[ERROR] {aggEx.InnerException?.Message ?? aggEx.Message}";
+                    throw new Exception($"[ERROR] {aggEx.InnerException?.Message ?? aggEx.Message}");
                 }
                 catch (Exception ex)
                 {
-                    return $"[ERROR] {ex.Message}";
+                    throw new Exception($"[ERROR] {ex.Message}");
                 }
             }, Code);
         }
-
-        /// <summary>
-        /// Evaluates a C# expression or script asynchronously and returns its result.
-        /// Preferred over RunCode for long-running scripts to avoid blocking the thread pool.
-        /// </summary>
-        public async Task<object> RunCodeAsync(string Code)
-        {
-            return await Sandbox.Exec(nameof(RunCodeAsync), async () =>
-            {
-                try
-                {
-                    return await CSharpScript.EvaluateAsync(Code);
-                }
-                catch (Exception Exception)
-                {
-                    return $"[ERROR] {Exception.Message}";
-                }
-            }, Code);
-        }
-
-        /// <summary>
-        /// Evaluates a C# script with a globals object that the script can access via the 'Data' variable.
-        /// Common namespaces (System, IO, Linq, Collections) are pre-imported.
-        /// </summary>
-        public object RunCodeWithGlobals(string Code, object Globals)
-      => Sandbox.Exec(nameof(RunCodeWithGlobals), () =>
-      {
-          try
-          {
-              var References = AppDomain.CurrentDomain.GetAssemblies()
-                  .Where(a => !a.IsDynamic && !string.IsNullOrEmpty(a.Location))
-                  .Select(a => MetadataReference.CreateFromFile(a.Location))
-                  .ToList();
-
-              ScriptOptions Options = ScriptOptions.Default
-                  .WithImports(
-                      "System",
-                      "System.IO",
-                      "System.Linq",
-                      "System.Collections.Generic",
-                      "System.Text",
-                      "System.Threading.Tasks",
-                      "System.Diagnostics"   
-                  )
-                  .WithReferences(References);  
-
-              Task<object> EvalTask = CSharpScript.EvaluateAsync(Code, Options, Globals);
-              EvalTask.Wait();
-              return EvalTask.Result;
-          }
-          catch (Exception Exception)
-          {
-              return $"[ERROR] {Exception.Message}";
-          }
-      }, Code, Globals);
 
         #endregion
     }
+
 }
