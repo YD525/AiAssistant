@@ -22,25 +22,25 @@ namespace AiAssistant.ExecuteUnit
 
         public static List<CapabilityInfo> CapabilityManifest = new List<CapabilityInfo>
 {
-    new CapabilityInfo
-    {
-        Name        = "RunCode",
-        Description = "Execute C# code using Roslyn scripting engine. Code is a top-level script (no explicit 'return' allowed). To return a value, use the last expression or statement value.",
-        Params      = new List<ParameterInfo>
-        {
-            new ParameterInfo { Name = "Code", Type = "string", Description = "C# code to evaluate (expression or full script). Do NOT use 'return' keyword." }
-        }
-    },
-    new CapabilityInfo
-    {
-        Name        = "RunCodeWithGlobals",
-        Description = "Execute C# script with external data object (exposed as 'Data' variable). Based on Roslyn CSharpScript engine. Top-level script does NOT support 'return' ¡ª use last expression value. Pre-imports System, System.IO, System.Linq, System.Collections.Generic.",
-        Params      = new List<ParameterInfo>
-        {
-            new ParameterInfo { Name = "Code",    Type = "string", Description = "C# script. Do NOT use 'return'. Access globals via 'Data'." },
-            new ParameterInfo { Name = "Globals", Type = "object", Description = "External data object, accessible as 'Data' inside script." }
-        }
-    },
+    //new CapabilityInfo
+    //{
+    //    Name        = "RunCode",
+    //    Description = "Execute C# code using Roslyn scripting engine. Code is a top-level script (no explicit 'return' allowed). To return a value, use the last expression or statement value.",
+    //    Params      = new List<ParameterInfo>
+    //    {
+    //        new ParameterInfo { Name = "Code", Type = "string", Description = "C# code to evaluate (expression or full script). Do NOT use 'return' keyword." }
+    //    }
+    //},
+    //new CapabilityInfo
+    //{
+    //    Name        = "RunCodeWithGlobals",
+    //    Description = "Execute C# script with external data object (exposed as 'Data' variable). Based on Roslyn CSharpScript engine. Top-level script does NOT support 'return' ¡ª use last expression value. Pre-imports System, System.IO, System.Linq, System.Collections.Generic.",
+    //    Params      = new List<ParameterInfo>
+    //    {
+    //        new ParameterInfo { Name = "Code",    Type = "string", Description = "C# script. Do NOT use 'return'. Access globals via 'Data'." },
+    //        new ParameterInfo { Name = "Globals", Type = "object", Description = "External data object, accessible as 'Data' inside script." }
+    //    }
+    //},
     new CapabilityInfo
     {
         Name        = "RunCodeWithReturn",

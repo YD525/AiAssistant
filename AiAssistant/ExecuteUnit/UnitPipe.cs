@@ -123,41 +123,6 @@ namespace AiAssistant.ExecuteUnit
             Builder.AppendLine();
             Builder.AppendLine(ContextInstruction);
             Builder.AppendLine();
-
-            Builder.AppendLine("=== EXAMPLE: batch deletion using CMD (preferred) ===");
-            Builder.AppendLine("{");
-            Builder.AppendLine("  \"Action\"   : \"ExecuteAndGetOutput\",");
-            Builder.AppendLine("  \"Params\"   : { \"Command\": \"del /s C:\\\\Temp\\\\*.log\", \"TimeoutMs\": 30000 },");
-            Builder.AppendLine("  \"Reason\"   : \"Deleting all .log files in one command instead of looping through each file.\",");
-            Builder.AppendLine("  \"Continue\" : false");
-            Builder.AppendLine("}");
-            Builder.AppendLine();
-
-            Builder.AppendLine("=== EXAMPLE: batch operation using C# code ===");
-            Builder.AppendLine("{");
-            Builder.AppendLine("  \"Action\"   : \"RunCode\",");
-            Builder.AppendLine("  \"Params\"   : { \"Code\": \"using System.IO; foreach(var f in Directory.GetFiles(@\\\"C:\\\\Temp\\\"\\\", \\\"*.log\\\", SearchOption.AllDirectories)) File.Delete(f);\" },");
-            Builder.AppendLine("  \"Reason\"   : \"C# loop deletes all .log files recursively in one step.\",");
-            Builder.AppendLine("  \"Continue\" : false");
-            Builder.AppendLine("}");
-            Builder.AppendLine();
-
-            Builder.AppendLine("=== EXAMPLE: more steps needed (only when batch is impossible) ===");
-            Builder.AppendLine("{");
-            Builder.AppendLine("  \"Action\"   : \"ExecuteAndGetOutput\",");
-            Builder.AppendLine("  \"Params\"   : { \"Command\": \"dir C:\\\\\", \"TimeoutMs\": 5000 },");
-            Builder.AppendLine("  \"Reason\"   : \"Need to list files before proceeding\",");
-            Builder.AppendLine("  \"Continue\" : true");
-            Builder.AppendLine("}");
-            Builder.AppendLine();
-
-            Builder.AppendLine("=== EXAMPLE: task complete ===");
-            Builder.AppendLine("{");
-            Builder.AppendLine("  \"Action\"   : \"Reply\",");
-            Builder.AppendLine("  \"Params\"   : { \"Message\": \"Done. Here are the results: ...\" },");
-            Builder.AppendLine("  \"Reason\"   : \"Task is complete\",");
-            Builder.AppendLine("  \"Continue\" : false");
-            Builder.AppendLine("}");
             Builder.AppendLine();
 
             Builder.AppendLine("=== AVAILABLE CAPABILITIES ===");
@@ -548,12 +513,12 @@ namespace AiAssistant.ExecuteUnit
             {
                 switch (ActionName)
                 {
-                    case "RunCode":
-                        return CSharpUnit.RunCode(Params["Code"]?.Value<string>());
-                    case "RunCodeWithGlobals":
-                        return CSharpUnit.RunCodeWithGlobals(
-                            Params["Code"]?.Value<string>(),
-                            Params["Globals"]?.ToObject<object>());
+                    //case "RunCode":
+                    //    return CSharpUnit.RunCode(Params["Code"]?.Value<string>());
+                    //case "RunCodeWithGlobals":
+                    //    return CSharpUnit.RunCodeWithGlobals(
+                    //        Params["Code"]?.Value<string>(),
+                    //        Params["Globals"]?.ToObject<object>());
                     case "RunCodeWithReturn":
                         return CSharpUnit.RunCodeWithReturn(Params["Code"]?.Value<string>());
                 }
