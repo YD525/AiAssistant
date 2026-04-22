@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using System.Net.Configuration;
+using System.Security.Permissions;
 using System.Text;
 using AiAssistant.FileManagement;
 using AiAssistant.Platform;
@@ -13,13 +14,20 @@ namespace AiAssistant.AI
         public bool EnableGemini { get; set; } = false;
         public bool EnableLMStudio { get; set; } = false;
 
-        public string ChatGptModel { get; set; } = "";
-        public string GeminiModel { get; set; } = "";
+        public string ChatGptModel { get; set; } = "gpt-4.1-nano";
+        public string GeminiModel { get; set; } = "gemini-2.5-flash";
 
         public byte[] ChatGptKey { get; set; }
         public byte[] GeminiKey { get; set; }
 
         public int LMStudioPort { get; set; } = 1234;
+
+        public bool EnableCMDUnit { get; set; } = false;
+        public bool EnableCSharpCodeUnit { get; set; } = false;
+        public bool EnableIOUnit { get; set; } = false;
+        public bool EnableMouseUnit { get; set; } = false;
+        public bool EnableRequestUnit { get; set; } = false;
+        public bool EnableWinApiUnit { get; set; } = false;
 
         public string GetChatGptKey()
         {

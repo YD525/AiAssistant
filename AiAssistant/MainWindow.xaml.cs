@@ -146,6 +146,31 @@ namespace AiAssistant
         }
         public void SyncConfig()
         {
+            if (AICenter.LocalSetting.EnableCMDUnit)
+            {
+                Pipe.CmdUnit.Enable = true;
+            }
+            if (AICenter.LocalSetting.EnableCSharpCodeUnit)
+            {
+                Pipe.CSharpUnit.Enable = true;
+            }
+            if (AICenter.LocalSetting.EnableIOUnit)
+            {
+                Pipe.IoUnit.Enable = true;
+            }
+            if (AICenter.LocalSetting.EnableMouseUnit)
+            {
+                Pipe.MouseUnit.Enable = true;
+            }
+            if (AICenter.LocalSetting.EnableRequestUnit)
+            {
+                Pipe.RequestUnit.Enable = true;
+            }
+            if (AICenter.LocalSetting.EnableWinApiUnit)
+            {
+                Pipe.WinApiUnit.Enable = true;
+            }
+
             SyncSandBox();
             SyncUnitConfig();
         }
@@ -366,6 +391,11 @@ namespace AiAssistant
                     }
                 }
             }
+        }
+
+        private void ShowAIConfig(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            new AIConfig().Show();
         }
     }
 }

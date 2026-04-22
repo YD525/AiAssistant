@@ -102,6 +102,9 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="AIConfig.xaml.cs">
+      <DependentUpon>AIConfig.xaml</DependentUpon>
+    </Compile>
     <Compile Include="AI\AICenter.cs" />
     <Compile Include="ConvertManagement\ConvertHelper.cs" />
     <Compile Include="DeFine.cs" />
@@ -119,6 +122,10 @@
     <Compile Include="SandBoxView.xaml.cs">
       <DependentUpon>SandBoxView.xaml</DependentUpon>
     </Compile>
+    <Page Include="AIConfig.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
