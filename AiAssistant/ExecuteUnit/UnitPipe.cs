@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using AiAssistant.Memory;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -274,11 +275,18 @@ namespace AiAssistant.ExecuteUnit
         /// </summary>
         public ExecutionResult AnalysisAndExecuteCapabilities(string AiJsonResponse)
         {
+            string GetJson = "";
+            var Match = Regex.Match(AiJsonResponse, @"\{[\s\S]*\}");
+            if (Match.Success)
+            {
+                GetJson = Match.Value;
+            }
+
             // --- Step 1: Parse JSON ---
             JObject ParsedJson;
             try
             {
-                ParsedJson = JObject.Parse(AiJsonResponse.Trim());
+                ParsedJson = JObject.Parse(GetJson);
             }
             catch (JsonException ParseException)
             {
