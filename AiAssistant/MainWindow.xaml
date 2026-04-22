@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:AiAssistant"
         mc:Ignorable="d"
-        Title="AiAssistant" Height="750" Width="800" WindowStartupLocation="CenterScreen">
+        Title="AiAssistant" Height="750" Width="800" WindowStartupLocation="CenterScreen" Loaded="Window_Loaded">
     <Grid Background="#FF383737">
         <Grid.RowDefinitions>
             <RowDefinition Height="5"/>
@@ -73,6 +73,15 @@
                     </Label>
                 </StackPanel>
             </Border>
+
+            <Border Height="25" CornerRadius="5" Background="#FF0782C7"  VerticalAlignment="Center" Margin="5 0 0 0" Cursor="Hand">
+
+                <Label HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="White">
+                    AI Config
+                </Label>
+
+            </Border>
+
         </StackPanel>
 
 
@@ -87,15 +96,14 @@
                     </TextBox>
                 </Border>
 
-                <CheckBox Foreground="White" Margin="0 5 0 5" IsChecked="True">
+                <CheckBox Name="CSandbox" Foreground="White" Margin="0 5 0 5" IsChecked="True" Click="CSandbox_Click">
                     Enable Sandbox
                 </CheckBox>
-                <Border Height="25" CornerRadius="5" Background="#FF0782C7" Margin="0 10 0 0">
 
+                <Border Height="25" CornerRadius="5" Background="#FF0782C7" Margin="0 10 0 0" Cursor="Hand" PreviewMouseDown="CallAI">
                     <Label HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="White">
                         Execute
                     </Label>
-                   
                 </Border>
 
                 <TextBox IsReadOnly="True" Name="Log" Height="100" Margin="0 5 0 0" VerticalScrollBarVisibility="Auto" Foreground="White" CaretBrush="White" Background="{x:Null}" BorderThickness="0" BorderBrush="{x:Null}">

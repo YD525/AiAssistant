@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Windows;
+using AiAssistant.ExecuteSandbox;
 using AiAssistant.ExecuteUnit;
 using AiAssistant.Platform;
+using static AiAssistant.ExecuteSandbox.Sandbox;
 
 namespace AiAssistant
 {
@@ -36,6 +38,36 @@ namespace AiAssistant
                 }
                 Prompt = Pipe.BuildResultPrompt(UserInput, Result);
             } while (true);
+        }
+
+        private void CallAI(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            AIAssistance(InputBox.Text);
+        }
+
+        public void SyncConfig()
+        {
+            if (CSandbox.IsChecked == true)
+            {
+                Sandbox.CheckSafeFunc += new CheckSafe((Func,Args) => 
+                {
+                    return SafeResult.Deny("");
+                });
+            }
+            else
+            {
+                Sandbox.CheckSafeFunc = null;
+            }
+        }
+
+        private void Window_Loaded(object sender, RoutedEventArgs e)
+        {
+            SyncConfig();
+        }
+
+        private void CSandbox_Click(object sender, RoutedEventArgs e)
+        {
+            SyncConfig();
         }
     }
 }
