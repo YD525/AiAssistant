@@ -62,6 +62,7 @@ namespace AiAssistant
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
+            DeFine.Init(this);
             SyncConfig();
         }
 

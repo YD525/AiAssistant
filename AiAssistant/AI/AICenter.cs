@@ -1,4 +1,8 @@
-﻿using System.Text;
+﻿using System.IO;
+using System.Net.Configuration;
+using System.Text;
+using AiAssistant.FileManagement;
+using Newtonsoft.Json;
 
 namespace AiAssistant.AI
 {
@@ -8,17 +12,46 @@ namespace AiAssistant.AI
         public bool EnableGemini { get; set; } = false;
         public bool EnableLMStudio { get; set; } = false;
 
-        public string ChatGptKey { get; set; } = "";
-
-        public string GeminiKey { get; set; } = "";
+        public byte[] ChatGptKey { get; set; }
+        public byte[] GeminiKey { get; set; }
 
         public int LMStudioPort { get; set; } = 1234;
 
+        public string GetChatGptKey()
+        {
+            if (ChatGptKey != null && ChatGptKey.Length > 0)
+            {
+                return Encoding.UTF8.GetString(ChatGptKey);
+            }
+            return string.Empty;
+        }
+
+        public string GetGeminiKey()
+        {
+            if (GeminiKey != null && GeminiKey.Length > 0)
+            {
+                return Encoding.UTF8.GetString(GeminiKey);
+            }
+            return string.Empty;
+        }
+
+        public AISetting Clone()
+        {
+            return new AISetting
+            {
+                EnableChatGpt = this.EnableChatGpt,
+                EnableGemini = this.EnableGemini,
+                EnableLMStudio = this.EnableLMStudio,
+                LMStudioPort = this.LMStudioPort,
+
+                ChatGptKey = this.ChatGptKey != null ? (byte[])this.ChatGptKey.Clone() : null,
+                GeminiKey = this.GeminiKey != null ? (byte[])this.GeminiKey.Clone() : null
+            };
+        }
     }
     public class AICenter
     {
-        public AISetting LocalSetting = new AISetting();
-
+        public static AISetting LocalSetting = new AISetting();
 
         private static readonly byte[] XorKey = Encoding.UTF8.GetBytes("AiAssistant");
         private static byte[] XOREncrypt(byte[] data)
@@ -36,6 +69,50 @@ namespace AiAssistant.AI
             return XOREncrypt(data);
         }
 
+        public static void Load()
+        {
+            string ConfigPath = DeFine.GetFullPath(@"\setting.config");
 
+            if (!File.Exists(ConfigPath))
+            {
+                DataHelper.WriteFile(ConfigPath, Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(new AISetting())));
+            }
+
+            LocalSetting = JsonConvert.DeserializeObject<AISetting>(
+                Encoding.UTF8.GetString(
+                    DataHelper.ReadFile(
+                        ConfigPath))) ;
+
+            if (LocalSetting.ChatGptKey.Length > 0)
+            {
+                LocalSetting.ChatGptKey = XORDecrypt(LocalSetting.ChatGptKey);
+            }
+
+            if (LocalSetting.GeminiKey.Length > 0)
+            {
+                LocalSetting.GeminiKey = XORDecrypt(LocalSetting.GeminiKey);
+            }
+        }
+
+        public static void Save()
+        {
+            string ConfigPath = DeFine.GetFullPath(@"\setting.config");
+
+            var TempLocalSetting = LocalSetting.Clone();
+
+            if (TempLocalSetting.ChatGptKey.Length > 0)
+            {
+                TempLocalSetting.ChatGptKey = XOREncrypt(TempLocalSetting.ChatGptKey);
+            }
+
+            if (TempLocalSetting.GeminiKey.Length > 0)
+            {
+                TempLocalSetting.GeminiKey = XOREncrypt(TempLocalSetting.GeminiKey);
+            }
+
+            string GetJson = JsonConvert.SerializeObject(LocalSetting);
+
+            DataHelper.WriteFile(ConfigPath,Encoding.UTF8.GetBytes(GetJson));
+        }
     }
 }

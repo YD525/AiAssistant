@@ -78,6 +78,7 @@
     <Reference Include="System.Threading.Tasks.Extensions, Version=4.2.1.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Threading.Tasks.Extensions.4.6.0\lib\net462\System.Threading.Tasks.Extensions.dll</HintPath>
     </Reference>
+    <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Core" />
@@ -100,12 +101,14 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="AI\AICenter.cs" />
+    <Compile Include="DeFine.cs" />
     <Compile Include="ExecuteUnit\CSharpCodeUnit.cs" />
     <Compile Include="ExecuteUnit\MouseUnit.cs" />
     <Compile Include="ExecuteUnit\RequestUnit.cs" />
     <Compile Include="ExecuteUnit\UnitHelper.cs" />
     <Compile Include="ExecuteUnit\UnitPipe.cs" />
     <Compile Include="ExecuteSandbox\Sandbox.cs" />
+    <Compile Include="FileManagement\DataHelper.cs" />
     <Compile Include="Platform\ChatGptApi.cs" />
     <Compile Include="Platform\GeminiApi.cs" />
     <Compile Include="Platform\LMStudio.cs" />
