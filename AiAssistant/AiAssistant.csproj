@@ -99,6 +99,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="AI\AICenter.cs" />
     <Compile Include="ExecuteUnit\CSharpCodeUnit.cs" />
     <Compile Include="ExecuteUnit\MouseUnit.cs" />
     <Compile Include="ExecuteUnit\RequestUnit.cs" />
