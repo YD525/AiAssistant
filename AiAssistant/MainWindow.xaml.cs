@@ -93,6 +93,10 @@ namespace AiAssistant
                                 if (ExitAIAssistance)
                                 {
                                     SetLog("End", "");
+                                    ExecuteBtn.Dispatcher.Invoke(new Action(() =>
+                                    {
+                                        ExecuteBtn.Content = "Execute";
+                                    }));
                                     ExecuteTrd = null;
                                     return;
                                 }
