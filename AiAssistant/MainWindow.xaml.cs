@@ -28,6 +28,7 @@ namespace AiAssistant
             //AIAssistance("Please check today's weather for me.");
         }
 
+        public bool ExitAIAssistance = false;
         public UnitPipe Pipe = new UnitPipe();
 
         public Thread ExecuteTrd = null;
@@ -37,6 +38,7 @@ namespace AiAssistant
             {
                 ExecuteTrd = new Thread(() =>
                 {
+                    ExitAIAssistance = false;
                     ExecuteBtn.Dispatcher.Invoke(new Action(() =>
                     {
                         ExecuteBtn.Content = "Executing";
@@ -88,6 +90,12 @@ namespace AiAssistant
 
                             if (Result.Status == "Failure")
                             {
+                                if (ExitAIAssistance)
+                                {
+                                    SetLog("End", "");
+                                    return;
+                                }
+
                                 RetryCount++;
                                 SetLog("RetryCount", $"{RetryCount} / {MaxRetry}");
 

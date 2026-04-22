@@ -42,6 +42,10 @@ namespace AiAssistant
 
         private void Deny(object sender, MouseButtonEventArgs e)
         {
+            if (DeFine.WorkingWin != null)
+            {
+                DeFine.WorkingWin.ExitAIAssistance = true;
+            }
             Pass = false;
             this.Close();
         }
