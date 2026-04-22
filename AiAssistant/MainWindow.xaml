@@ -13,8 +13,8 @@
             <RowDefinition Height="1*"/>
         </Grid.RowDefinitions>
 
-        <StackPanel Orientation="Horizontal" Margin="5 0 5 0" Grid.Row="1">
-            <Border CornerRadius="9" Background="#FF525252" Cursor="Hand" Margin="5 0 0 0">
+        <StackPanel Orientation="Horizontal" Margin="5 0 5 0" Grid.Row="1" Name="Units">
+            <Border CornerRadius="9" Background="#FF525252" Cursor="Hand" Margin="5 0 0 0" PreviewMouseDown="UnitClick">
                 <StackPanel Orientation="Horizontal" Margin="10 0 10 0">
                     <Ellipse Width="5" Height="5" Fill="Black">
                     </Ellipse>
@@ -24,17 +24,17 @@
                 </StackPanel>
             </Border>
 
-            <Border CornerRadius="9" Background="#FF525252" Cursor="Hand" Margin="5 0 0 0">
+            <Border CornerRadius="9" Background="#FF525252" Cursor="Hand" Margin="5 0 0 0" PreviewMouseDown="UnitClick">
                 <StackPanel Orientation="Horizontal" Margin="10 0 10 0">
                     <Ellipse Width="5" Height="5" Fill="Black">
                     </Ellipse>
                     <Label Foreground="White" VerticalAlignment="Center" HorizontalAlignment="Center">
-                        CSharpCodeUnit
+                        CSharpUnit
                     </Label>
                 </StackPanel>
             </Border>
 
-            <Border CornerRadius="9" Background="#FF525252" Cursor="Hand" Margin="5 0 0 0">
+            <Border CornerRadius="9" Background="#FF525252" Cursor="Hand" Margin="5 0 0 0" PreviewMouseDown="UnitClick">
                 <StackPanel Orientation="Horizontal" Margin="10 0 10 0">
                     <Ellipse Width="5" Height="5" Fill="Black">
                     </Ellipse>
@@ -44,7 +44,7 @@
                 </StackPanel>
             </Border>
 
-            <Border CornerRadius="9" Background="#FF525252" Cursor="Hand" Margin="5 0 0 0">
+            <Border CornerRadius="9" Background="#FF525252" Cursor="Hand" Margin="5 0 0 0" PreviewMouseDown="UnitClick">
                 <StackPanel Orientation="Horizontal" Margin="10 0 10 0">
                     <Ellipse Width="5" Height="5" Fill="Black">
                     </Ellipse>
@@ -54,7 +54,7 @@
                 </StackPanel>
             </Border>
 
-            <Border CornerRadius="9" Background="#FF525252" Cursor="Hand" Margin="5 0 0 0">
+            <Border CornerRadius="9" Background="#FF525252" Cursor="Hand" Margin="5 0 0 0" PreviewMouseDown="UnitClick">
                 <StackPanel Orientation="Horizontal" Margin="10 0 10 0">
                     <Ellipse Width="5" Height="5" Fill="Black">
                     </Ellipse>
@@ -64,7 +64,7 @@
                 </StackPanel>
             </Border>
 
-            <Border CornerRadius="9" Background="#FF525252" Cursor="Hand" Margin="5 0 0 0">
+            <Border CornerRadius="9" Background="#FF525252" Cursor="Hand" Margin="5 0 0 0" PreviewMouseDown="UnitClick">
                 <StackPanel Orientation="Horizontal" Margin="10 0 10 0">
                     <Ellipse Width="5" Height="5" Fill="Black">
                     </Ellipse>

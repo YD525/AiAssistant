@@ -1,7 +1,11 @@
 ﻿using System;
 using System.Threading;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Media;
+using System.Windows.Shapes;
 using AiAssistant.AI;
+using AiAssistant.ConvertManagement;
 using AiAssistant.ExecuteSandbox;
 using AiAssistant.ExecuteUnit;
 using AiAssistant.Platform;
@@ -23,12 +27,14 @@ namespace AiAssistant
             //AIAssistance("Please check today's weather for me.");
         }
 
-        public Thread ExcuteTrd = null;
+        public UnitPipe Pipe = new UnitPipe();
+
+        public Thread ExecuteTrd = null;
         public void AIAssistance(string Input)
         {
-            if (ExcuteTrd == null)
+            if (ExecuteTrd == null)
             {
-                ExcuteTrd = new Thread(() =>
+                ExecuteTrd = new Thread(() =>
                 {
                     ExecuteBtn.Dispatcher.Invoke(new Action(() =>
                     {
@@ -37,7 +43,6 @@ namespace AiAssistant
 
                     try
                     {
-                        var Pipe = new UnitPipe();
                         string UserInput = Input;
                         string Prompt = Pipe.BuildUserPrompt(UserInput);
                         do
@@ -86,14 +91,11 @@ namespace AiAssistant
                         ExecuteBtn.Content = "Execute";
                     }));
 
-                    ExcuteTrd = null;
+                    ExecuteTrd = null;
                 });
 
-                ExcuteTrd.Start();
+                ExecuteTrd.Start();
             }
-
-
-
         }
 
         private void CallAI(object sender, System.Windows.Input.MouseButtonEventArgs e)
@@ -101,7 +103,7 @@ namespace AiAssistant
             AIAssistance(InputBox.Text);
         }
 
-        public void SyncConfig()
+        public void SyncSandBox()
         {
             if (CSandbox.IsChecked == true)
             {
@@ -142,6 +144,11 @@ namespace AiAssistant
                 Sandbox.CheckSafeFunc = null;
             }
         }
+        public void SyncConfig()
+        {
+            SyncSandBox();
+            SyncUnitConfig();
+        }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
@@ -151,7 +158,214 @@ namespace AiAssistant
 
         private void CSandbox_Click(object sender, RoutedEventArgs e)
         {
-            SyncConfig();
+            SyncSandBox();
+        }
+
+        public void SyncUnitConfig()
+        {
+            foreach (var GetUnit in Units.Children)
+            {
+                if (GetUnit is Border)
+                {
+                    if ((GetUnit as Border).Child is StackPanel)
+                    {
+                        StackPanel GetPanel = (GetUnit as Border).Child as StackPanel;
+
+                        if (GetPanel.Children[0] is Ellipse)
+                        {
+                            if (GetPanel.Children[1] is Label)
+                            {
+                                Ellipse StateLight = GetPanel.Children[0] as Ellipse;
+                                string GetUnitName = ConvertHelper.ObjToStr((GetPanel.Children[1] as Label).Content);
+
+                                switch (GetUnitName)
+                                {
+                                    case "CMDUnit":
+                                        {
+                                            if (Pipe.CmdUnit.Enable)
+                                            {
+                                                StateLight.Fill = new SolidColorBrush(Colors.Blue);
+                                            }
+                                            else
+                                            {
+                                                StateLight.Fill = new SolidColorBrush(Colors.Black);
+                                            }
+                                        }
+                                        break;
+                                    case "CSharpUnit":
+                                        {
+                                            if (Pipe.CSharpUnit.Enable)
+                                            {
+                                                StateLight.Fill = new SolidColorBrush(Colors.Blue);
+                                            }
+                                            else
+                                            {
+                                                StateLight.Fill = new SolidColorBrush(Colors.Black);
+                                            }
+                                        }
+                                        break;
+                                    case "IOUnit":
+                                        {
+                                            if (Pipe.IoUnit.Enable)
+                                            {
+                                                StateLight.Fill = new SolidColorBrush(Colors.Blue);
+                                            }
+                                            else
+                                            {
+                                                StateLight.Fill = new SolidColorBrush(Colors.Black);
+                                            }
+                                        }
+                                        break;
+                                    case "MouseUnit":
+                                        {
+                                            if (Pipe.MouseUnit.Enable)
+                                            {
+                                                StateLight.Fill = new SolidColorBrush(Colors.Blue);
+                                            }
+                                            else
+                                            {
+                                                StateLight.Fill = new SolidColorBrush(Colors.Black);
+                                            }
+                                        }
+                                        break;
+                                    case "RequestUnit":
+                                        {
+                                            if (Pipe.RequestUnit.Enable)
+                                            {
+                                                StateLight.Fill = new SolidColorBrush(Colors.Blue);
+                                            }
+                                            else
+                                            {
+                                                StateLight.Fill = new SolidColorBrush(Colors.Black);
+                                            }
+                                        }
+                                        break;
+                                    case "WinApiUnit":
+                                        {
+                                            if (Pipe.WinApiUnit.Enable)
+                                            {
+                                                StateLight.Fill = new SolidColorBrush(Colors.Blue);
+                                            }
+                                            else
+                                            {
+                                                StateLight.Fill = new SolidColorBrush(Colors.Black);
+                                            }
+                                        }
+                                        break;
+                                }
+                            }
+                        }
+                    }
+                }      
+            }
+        }
+       
+
+        private void UnitClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            if (sender is Border)
+            {
+                Border MainBorder = (Border)sender;
+
+                StackPanel GetPanel = MainBorder.Child as StackPanel;
+
+                if (GetPanel.Children[0] is Ellipse)
+                {
+                    if (GetPanel.Children[1] is Label)
+                    {
+                        Ellipse StateLight = GetPanel.Children[0] as Ellipse;
+                        string GetUnitName = ConvertHelper.ObjToStr((GetPanel.Children[1] as Label).Content);
+
+                        switch (GetUnitName)
+                        {
+                            case "CMDUnit":
+                                {
+                                    if (Pipe.CmdUnit.Enable)
+                                    {
+                                        StateLight.Fill = new SolidColorBrush(Colors.Black);
+                                        Pipe.CmdUnit.Enable = false;
+                                    }
+                                    else
+                                    {
+                                        StateLight.Fill = new SolidColorBrush(Colors.Blue);
+                                        Pipe.CmdUnit.Enable = true;
+                                    }
+                                }
+                            break;
+                            case "CSharpUnit":
+                                {
+                                    if (Pipe.CSharpUnit.Enable)
+                                    {
+                                        StateLight.Fill = new SolidColorBrush(Colors.Black);
+                                        Pipe.CSharpUnit.Enable = false;
+                                    }
+                                    else
+                                    {
+                                        StateLight.Fill = new SolidColorBrush(Colors.Blue);
+                                        Pipe.CSharpUnit.Enable = true;
+                                    }
+                                }
+                            break;
+                            case "IOUnit":
+                                {
+                                    if (Pipe.IoUnit.Enable)
+                                    {
+                                        StateLight.Fill = new SolidColorBrush(Colors.Black);
+                                        Pipe.IoUnit.Enable = false;
+                                    }
+                                    else
+                                    {
+                                        StateLight.Fill = new SolidColorBrush(Colors.Blue);
+                                        Pipe.IoUnit.Enable = true;
+                                    }
+                                }
+                            break;
+                            case "MouseUnit":
+                                {
+                                    if (Pipe.MouseUnit.Enable)
+                                    {
+                                        StateLight.Fill = new SolidColorBrush(Colors.Black);
+                                        Pipe.MouseUnit.Enable = false;
+                                    }
+                                    else
+                                    {
+                                        StateLight.Fill = new SolidColorBrush(Colors.Blue);
+                                        Pipe.MouseUnit.Enable = true;
+                                    }
+                                }
+                            break;
+                            case "RequestUnit":
+                                {
+                                    if (Pipe.RequestUnit.Enable)
+                                    {
+                                        StateLight.Fill = new SolidColorBrush(Colors.Black);
+                                        Pipe.RequestUnit.Enable = false;
+                                    }
+                                    else
+                                    {
+                                        StateLight.Fill = new SolidColorBrush(Colors.Blue);
+                                        Pipe.RequestUnit.Enable = true;
+                                    }
+                                }
+                            break;
+                            case "WinApiUnit":
+                                {
+                                    if (Pipe.WinApiUnit.Enable)
+                                    {
+                                        StateLight.Fill = new SolidColorBrush(Colors.Black);
+                                        Pipe.WinApiUnit.Enable = false;
+                                    }
+                                    else
+                                    {
+                                        StateLight.Fill = new SolidColorBrush(Colors.Blue);
+                                        Pipe.WinApiUnit.Enable = true;
+                                    }
+                                }
+                            break;
+                        }
+                    }
+                }
+            }
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using AiAssistant.AI;
+﻿using System;
+using AiAssistant.AI;
 
 namespace AiAssistant
 {
@@ -31,5 +32,17 @@ namespace AiAssistant
             }
             return GetShellPath + Path;
         }
+
+        public static void CloseAny()
+        {
+            if (WorkingWin != null)
+            {
+                WorkingWin.Hide();
+            }
+
+            AICenter.Save();
+            Environment.Exit(0);
+        }
+
     }
 }

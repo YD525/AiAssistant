@@ -59,6 +59,7 @@
       <HintPath>..\packages\System.Collections.Immutable.9.0.0\lib\net462\System.Collections.Immutable.dll</HintPath>
     </Reference>
     <Reference Include="System.Data" />
+    <Reference Include="System.Drawing" />
     <Reference Include="System.Memory, Version=4.0.2.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Memory.4.6.0\lib\net462\System.Memory.dll</HintPath>
     </Reference>
@@ -78,6 +79,7 @@
     <Reference Include="System.Threading.Tasks.Extensions, Version=4.2.1.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Threading.Tasks.Extensions.4.6.0\lib\net462\System.Threading.Tasks.Extensions.dll</HintPath>
     </Reference>
+    <Reference Include="System.Web" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
     <Reference Include="Microsoft.CSharp" />
@@ -101,6 +103,7 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="AI\AICenter.cs" />
+    <Compile Include="ConvertManagement\ConvertHelper.cs" />
     <Compile Include="DeFine.cs" />
     <Compile Include="ExecuteUnit\CSharpCodeUnit.cs" />
     <Compile Include="ExecuteUnit\MouseUnit.cs" />

@@ -13,12 +13,12 @@ namespace AiAssistant.ExecuteUnit
     {
         #region Unit Instances
 
-        private readonly IOUnit IoUnit = new IOUnit();
-        private readonly CMDUnit CmdUnit = new CMDUnit();
-        private readonly MouseUnit MouseUnit = new MouseUnit();
-        private readonly RequestUnit RequestUnit = new RequestUnit();
-        private readonly WinApiUnit WinApiUnit = new WinApiUnit();
-        private readonly CSharpCodeUnit CSharpUnit = new CSharpCodeUnit();
+        public IOUnit IoUnit = new IOUnit();
+        public CMDUnit CmdUnit = new CMDUnit();
+        public MouseUnit MouseUnit = new MouseUnit();
+        public RequestUnit RequestUnit = new RequestUnit();
+        public WinApiUnit WinApiUnit = new WinApiUnit();
+        public CSharpCodeUnit CSharpUnit = new CSharpCodeUnit();
 
         #endregion
 
