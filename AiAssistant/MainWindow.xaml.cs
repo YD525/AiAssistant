@@ -43,8 +43,11 @@ namespace AiAssistant
 
                     try
                     {
+                        ClearLog();
                         string UserInput = Input;
                         string Prompt = Pipe.BuildUserPrompt(UserInput);
+
+                        SetLog("Prompt", Prompt);
                         do
                         {
                             string AiReply = "";
@@ -52,16 +55,19 @@ namespace AiAssistant
                             if (AICenter.Gemini != null)
                             {
                                 AiReply = AICenter.Gemini.QueryAI(UserInput);
+                                SetLog("Gemini", AiReply);
                             }
                             else
                             if (AICenter.ChatGpt != null)
                             {
                                 AiReply = AICenter.ChatGpt.QueryAI(UserInput);
+                                SetLog("ChatGpt", AiReply);
                             }
                             else
                             if (AICenter.LocalAI != null)
                             {
                                 AiReply = AICenter.LocalAI.QueryAI(UserInput);
+                                SetLog("LocalAI", AiReply);
                             }
 
                             if (AiReply == "")
@@ -72,12 +78,17 @@ namespace AiAssistant
 
                             ExecutionResult Result = Pipe.AnalysisAndExecuteCapabilities(AiReply);
 
+                            SetLog("ExecutionResult",JsonConvert.SerializeObject(Result));
+
                             if (!Result.Continue)
                             {
-                                Console.WriteLine(Result.ReturnValue);
+                                SetLog("Complete", ConvertHelper.ObjToStr(Result.ReturnValue));
                                 break;
                             }
+
                             Prompt = Pipe.BuildResultPrompt(UserInput, Result);
+
+                            SetLog("RePrompt", Prompt);
                         } while (true);
 
                     }
@@ -101,6 +112,20 @@ namespace AiAssistant
         private void CallAI(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
             AIAssistance(InputBox.Text);
+        }
+        public void ClearLog()
+        {
+            Log.Dispatcher.Invoke(new Action(() => {
+                Log.Text = string.Empty;
+            }));
+        }
+
+        public void SetLog(string StepName,string OneLog)
+        {
+            Log.Dispatcher.Invoke(new Action(() => {
+                Log.Text += StepName + "->\r\n" + OneLog + "\r\n" + "\r\n";
+                Log.ScrollToEnd();
+            }));
         }
 
         public void SyncSandBox()
