@@ -93,6 +93,7 @@ namespace AiAssistant
                                 if (ExitAIAssistance)
                                 {
                                     SetLog("End", "");
+                                    ExecuteTrd = null;
                                     return;
                                 }
 
