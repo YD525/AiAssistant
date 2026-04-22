@@ -157,6 +157,15 @@ namespace AiAssistant.ExecuteUnit
             Builder.AppendLine("1. Action MUST ALWAYS be one of the AVAILABLE CAPABILITIES.");
             Builder.AppendLine("2. All outputs must be produced through capability execution results.");
             Builder.AppendLine("3. The model must always select an Action before responding.");
+
+            Builder.AppendLine("=== EXECUTION ENVIRONMENT ===");
+            Builder.AppendLine("You are writing C# SCRIPT code, NOT a Console Application.");
+            Builder.AppendLine();
+            Builder.AppendLine("=== SCRIPT DEV RULES ===");
+            Builder.AppendLine("1. DO NOT create any class.");
+            Builder.AppendLine("2. DO NOT create Main method.");
+            Builder.AppendLine("4. Code runs in a single script file (top-level C# statements).");
+            Builder.AppendLine();
         }
 
         /// <summary>
