@@ -175,7 +175,7 @@ namespace AiAssistant
                     Application.Current.Dispatcher.Invoke(new Action(() =>
                     {
                         NSandBoxView = new SandBoxView();
-                        string CreateCommand = "Function:" + Func.ToString() + "\r\n" + "Args:" + JsonConvert.SerializeObject(Args);
+                        string CreateCommand = "Function:" + Func.ToString() + "\r\n" + "Args:" + JsonConvert.SerializeObject(Args,Formatting.Indented);
                         NSandBoxView.SetCommand(CreateCommand);
                     }));
 

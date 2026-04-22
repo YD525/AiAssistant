@@ -6,6 +6,7 @@ using AiAssistant.ExecuteSandbox;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Scripting;
 using Microsoft.CodeAnalysis.Scripting;
+using Newtonsoft.Json;
 using static AiAssistant.ExecuteUnit.UnitHelper;
 
 namespace AiAssistant.ExecuteUnit
@@ -43,7 +44,7 @@ namespace AiAssistant.ExecuteUnit
     //},
     new CapabilityInfo
     {
-        Name        = "RunCodeWithReturn",
+        Name        = "RunCSharpCode",
         Description = "Execute C# code that supports explicit 'return' statements. Wraps code in a Func<object> lambda, so 'return expression;' works. Based on Roslyn scripting engine.",
         Params      = new List<ParameterInfo>
         {
@@ -102,9 +103,9 @@ namespace AiAssistant.ExecuteUnit
         }
     }, Code);
 
-        public object RunCodeWithReturn(string Code)
+        public object RunCSharpCode(string Code)
         {
-            return Sandbox.Exec(nameof(RunCodeWithReturn), () =>
+            return Sandbox.Exec(nameof(RunCSharpCode), () =>
             {
                 try
                 {
@@ -123,9 +124,16 @@ namespace AiAssistant.ExecuteUnit
                         .WithImports(DefaultImports)
                         .WithReferences(References);
 
-                    var Task = CSharpScript.EvaluateAsync<object>(Code, Options);
-                    Task.Wait();
-                    return Task.Result;
+
+                    var script = CSharpScript.Create(Code, Options);
+                    var scriptTask = script.RunAsync();
+                    scriptTask.Wait();
+
+                    return JsonConvert.SerializeObject(scriptTask.Result.ReturnValue,Formatting.Indented);
+                }
+                catch (AggregateException aggEx)
+                {
+                    return $"[ERROR] {aggEx.InnerException?.Message ?? aggEx.Message}";
                 }
                 catch (Exception ex)
                 {

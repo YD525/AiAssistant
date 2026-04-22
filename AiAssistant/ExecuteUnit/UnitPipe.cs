@@ -513,14 +513,8 @@ namespace AiAssistant.ExecuteUnit
             {
                 switch (ActionName)
                 {
-                    //case "RunCode":
-                    //    return CSharpUnit.RunCode(Params["Code"]?.Value<string>());
-                    //case "RunCodeWithGlobals":
-                    //    return CSharpUnit.RunCodeWithGlobals(
-                    //        Params["Code"]?.Value<string>(),
-                    //        Params["Globals"]?.ToObject<object>());
-                    case "RunCodeWithReturn":
-                        return CSharpUnit.RunCodeWithReturn(Params["Code"]?.Value<string>());
+                    case "RunCSharpCode":
+                        return CSharpUnit.RunCSharpCode(Params["Code"]?.Value<string>());
                 }
             }
 
