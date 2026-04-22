@@ -81,12 +81,16 @@
                 </Label>
 
             </Border>
-
         </StackPanel>
 
 
         <Grid Grid.Row="2">
             <StackPanel Orientation="Vertical" VerticalAlignment="Center" HorizontalAlignment="Center">
+                
+                <Label HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="White">
+                    Click on the unit at the top to allow or disable the AI ​​from using specific capabilities.
+                </Label>
+                
                 <Label Foreground="White" FontSize="30">
                     Tell me what you need me to do?
                 </Label>

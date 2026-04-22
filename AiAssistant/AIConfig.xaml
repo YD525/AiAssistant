@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:AiAssistant"
         mc:Ignorable="d"
-        Title="AIConfig" Height="350" Width="500" Loaded="Window_Loaded">
+        Title="AIConfig" Height="350" Width="500" Loaded="Window_Loaded" WindowStartupLocation="CenterScreen">
     <Grid>
         <StackPanel Orientation="Vertical" VerticalAlignment="Center" HorizontalAlignment="Center">
             <StackPanel Orientation="Vertical">

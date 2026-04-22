@@ -20,12 +20,12 @@ namespace AiAssistant.AI
 
         public int LMStudioPort { get; set; } = 1234;
 
-        public bool EnableCMDUnit { get; set; } = false;
-        public bool EnableCSharpCodeUnit { get; set; } = false;
-        public bool EnableIOUnit { get; set; } = false;
+        public bool EnableCMDUnit { get; set; } = false;//Enabling CMD means that AI can execute DOS commands. AI can do everything that CMD can do.
+        public bool EnableCSharpCodeUnit { get; set; } = false;//Enabling script generation means that AI can almost completely control your computer.
+        public bool EnableIOUnit { get; set; } = true;
         public bool EnableMouseUnit { get; set; } = false;
-        public bool EnableRequestUnit { get; set; } = false;
-        public bool EnableWinApiUnit { get; set; } = false;
+        public bool EnableRequestUnit { get; set; } = true;
+        public bool EnableWinApiUnit { get; set; } = true;
 
         public string GetChatGptKey()
         {
