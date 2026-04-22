@@ -6,7 +6,7 @@ namespace AiAssistant
     public class DeFine
     {
         public static MainWindow WorkingWin = null;
-        public static string Version = "1.0.0.1 Alpha";
+        public static string Version = "1.0.0.2 Alpha";
         public static void Init(MainWindow Win)
         {
             WorkingWin = Win;

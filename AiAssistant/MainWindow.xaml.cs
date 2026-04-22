@@ -179,6 +179,8 @@ namespace AiAssistant
         {
             DeFine.Init(this);
             SyncConfig();
+
+            this.Title = string.Format("Ai Assistant - {0}", DeFine.Version);
         }
 
         private void CSandbox_Click(object sender, RoutedEventArgs e)

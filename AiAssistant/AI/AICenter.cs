@@ -1,6 +1,4 @@
 ﻿using System.IO;
-using System.Net.Configuration;
-using System.Security.Permissions;
 using System.Text;
 using AiAssistant.FileManagement;
 using AiAssistant.Platform;
@@ -66,7 +64,7 @@ namespace AiAssistant.AI
         public static AISetting LocalSetting = new AISetting();
 
         private static readonly byte[] XorKey = Encoding.UTF8.GetBytes("AiAssistant");
-        private static byte[] XOREncrypt(byte[] data)
+        public static byte[] XOREncrypt(byte[] data)
         {
             byte[] result = new byte[data.Length];
             for (int i = 0; i < data.Length; i++)
@@ -76,7 +74,7 @@ namespace AiAssistant.AI
             return result;
         }
 
-        private static byte[] XORDecrypt(byte[] data)
+        public static byte[] XORDecrypt(byte[] data)
         {
             return XOREncrypt(data);
         }
@@ -85,12 +83,16 @@ namespace AiAssistant.AI
         public static GeminiApi Gemini = null;
         public static LMStudio LocalAI = null;
 
-        public static void Init()
+        public static void SyncAIConfig()
         {
             if (LocalSetting.EnableChatGpt && LocalSetting.GetChatGptKey().Length > 0)
             {
                 ChatGpt = new ChatGptApi();
-                ChatGpt.Init(LocalSetting.ChatGptModel,LocalSetting.GetChatGptKey(),null);
+                ChatGpt.Init(LocalSetting.ChatGptModel, LocalSetting.GetChatGptKey(), null);
+            }
+            else
+            {
+                ChatGpt = null;
             }
 
             if (LocalSetting.EnableGemini && LocalSetting.GetGeminiKey().Length > 0)
@@ -98,12 +100,24 @@ namespace AiAssistant.AI
                 Gemini = new GeminiApi();
                 Gemini.Init(LocalSetting.GeminiModel, LocalSetting.GetGeminiKey(), null);
             }
+            else
+            {
+                Gemini = null;
+            }
 
             if (LocalSetting.EnableLMStudio)
             {
                 LocalAI = new LMStudio();
                 LocalAI.Init(LocalAI.LocalPort);
             }
+            else
+            {
+                LocalAI = null;
+            }
+        }
+        public static void Init()
+        {
+            SyncAIConfig();
         }
 
         public static void Load()
@@ -120,11 +134,13 @@ namespace AiAssistant.AI
                     DataHelper.ReadFile(
                         ConfigPath))) ;
 
+            if(LocalSetting.ChatGptKey!=null)
             if (LocalSetting.ChatGptKey.Length > 0)
             {
                 LocalSetting.ChatGptKey = XORDecrypt(LocalSetting.ChatGptKey);
             }
 
+            if(LocalSetting.GeminiKey!=null)
             if (LocalSetting.GeminiKey.Length > 0)
             {
                 LocalSetting.GeminiKey = XORDecrypt(LocalSetting.GeminiKey);

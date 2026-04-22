@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:AiAssistant"
         mc:Ignorable="d"
-        Title="AIConfig" Height="350" Width="500">
+        Title="AIConfig" Height="350" Width="500" Loaded="Window_Loaded">
     <Grid>
         <StackPanel Orientation="Vertical" VerticalAlignment="Center" HorizontalAlignment="Center">
             <StackPanel Orientation="Vertical">
@@ -18,17 +18,17 @@
                     <Label>
                         ApiKey
                     </Label>
-                    <TextBox Width="150" VerticalContentAlignment="Center">
+                    <TextBox Width="150" VerticalContentAlignment="Center" Name="ChatGptKey" TextChanged="ChatGptKey_TextChanged">
                     </TextBox>
 
                     <Label Margin="5 0 0 0">
                         Model
                     </Label>
-                    <TextBox Width="150" VerticalContentAlignment="Center">
+                    <TextBox Width="150" VerticalContentAlignment="Center" Name="ChatGptModel" TextChanged="ChatGptModel_TextChanged">
                         gpt-4.1-nano
                     </TextBox>
 
-                    <CheckBox Margin="5 0 0 0" VerticalAlignment="Center">
+                    <CheckBox Margin="5 0 0 0" VerticalAlignment="Center" Name="ChatGptCheck" Click="ChatGptCheck_Click">
                         Enable
                     </CheckBox>
                 </StackPanel>
@@ -43,17 +43,17 @@
                     <Label>
                         ApiKey
                     </Label>
-                    <TextBox Width="150" VerticalContentAlignment="Center">
+                    <TextBox Width="150" VerticalContentAlignment="Center" Name="GeminiKey" TextChanged="GeminiKey_TextChanged">
                     </TextBox>
 
                     <Label Margin="5 0 0 0">
                         Model
                     </Label>
-                    <TextBox Width="150" VerticalContentAlignment="Center">
+                    <TextBox Width="150" VerticalContentAlignment="Center" Name="GeminiModel" TextChanged="GeminiModel_TextChanged">
                         gemini-2.5-flash
                     </TextBox>
 
-                    <CheckBox Margin="5 0 0 0" VerticalAlignment="Center">
+                    <CheckBox Margin="5 0 0 0" VerticalAlignment="Center" Name="GeminiCheck" Click="GeminiCheck_Click">
                         Enable
                     </CheckBox>
                 </StackPanel>
@@ -69,11 +69,11 @@
                     <Label>
                         Port
                     </Label>
-                    <TextBox Width="150" VerticalContentAlignment="Center">
+                    <TextBox Width="150" VerticalContentAlignment="Center" Name="LMPort" TextChanged="LMPort_TextChanged">
                         1234
                     </TextBox>
 
-                    <CheckBox Margin="5 0 0 0" VerticalAlignment="Center">
+                    <CheckBox Margin="5 0 0 0" VerticalAlignment="Center" Name="LMStudioCheck" Click="LMStudioCheck_Click">
                         Enable
                     </CheckBox>
                 </StackPanel>
