@@ -84,7 +84,7 @@ namespace AiAssistant.ExecuteUnit
             new CapabilityInfo
             {
                 Name        = "KillProcess",
-                Description = "Terminate a process by PID or by process name",
+                Description = "Terminate a process by PID or by process name. IMPORTANT: When using process name, do NOT include file extension (e.g., use 'notepad' instead of 'notepad.exe').",
                 Params      = new List<ParameterInfo>
                 {
                     new ParameterInfo { Name = "Pid",  Type = "int",    Description = "Process ID to kill; pass -1 to use Name instead" },

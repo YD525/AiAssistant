@@ -52,7 +52,7 @@ namespace AiAssistant
                         SetLog("Prompt", Prompt);
 
                         int RetryCount = 0;
-                        const int MaxRetry = 3;
+                        const int MaxRetry = 10;
 
                         do
                         {
@@ -81,7 +81,7 @@ namespace AiAssistant
                                 }));
                                 ExecuteTrd = null;
 
-                                MessageBox.Show("You have not enabled AI or there is a network error.");
+                                SetLog("Cancel", "The AI ​​interrupted the operation.");
 
                                 return;
                             }
