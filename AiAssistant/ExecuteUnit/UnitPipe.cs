@@ -514,6 +514,8 @@ namespace AiAssistant.ExecuteUnit
                         return CSharpUnit.RunCodeWithGlobals(
                             Params["Code"]?.Value<string>(),
                             Params["Globals"]?.ToObject<object>());
+                    case "RunCodeWithReturn":
+                        return CSharpUnit.RunCodeWithReturn(Params["Code"]?.Value<string>());
                 }
             }
 

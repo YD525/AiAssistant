@@ -19,28 +19,36 @@ namespace AiAssistant.ExecuteUnit
         #region Capability Manifest (AI readable)
 
         public static List<CapabilityInfo> CapabilityManifest = new List<CapabilityInfo>
+{
+    new CapabilityInfo
+    {
+        Name        = "RunCode",
+        Description = "Execute C# code using Roslyn scripting engine. Code is a top-level script (no explicit 'return' allowed). To return a value, use the last expression or statement value.",
+        Params      = new List<ParameterInfo>
         {
-            new CapabilityInfo
-            {
-                Name        = "RunCode",
-                Description = "Execute a C# expression or script and return the result",
-                Params      = new List<ParameterInfo>
-                {
-                    new ParameterInfo { Name = "Code", Type = "string", Description = "C# code to evaluate (expression or full script)" }
-                }
-            },
-            new CapabilityInfo
-            {
-                Name        = "RunCodeWithGlobals",
-                Description = "Execute a C# script that has access to an external data object via the 'Data' global variable",
-                Params      = new List<ParameterInfo>
-                {
-                    new ParameterInfo { Name = "Code",    Type = "string", Description = "C# script to execute; use 'Data' to access the globals object" },
-                    new ParameterInfo { Name = "Globals", Type = "object", Description = "External data object exposed as 'Data' inside the script" }
-                }
-            }
-        };
-
+            new ParameterInfo { Name = "Code", Type = "string", Description = "C# code to evaluate (expression or full script). Do NOT use 'return' keyword." }
+        }
+    },
+    new CapabilityInfo
+    {
+        Name        = "RunCodeWithGlobals",
+        Description = "Execute C# script with external data object (exposed as 'Data' variable). Based on Roslyn CSharpScript engine. Top-level script does NOT support 'return' ¡ª use last expression value. Pre-imports System, System.IO, System.Linq, System.Collections.Generic.",
+        Params      = new List<ParameterInfo>
+        {
+            new ParameterInfo { Name = "Code",    Type = "string", Description = "C# script. Do NOT use 'return'. Access globals via 'Data'." },
+            new ParameterInfo { Name = "Globals", Type = "object", Description = "External data object, accessible as 'Data' inside script." }
+        }
+    },
+    new CapabilityInfo
+    {
+        Name        = "RunCodeWithReturn",
+        Description = "Execute C# code that supports explicit 'return' statements. Wraps code in a Func<object> lambda, so 'return expression;' works. Based on Roslyn scripting engine.",
+        Params      = new List<ParameterInfo>
+        {
+            new ParameterInfo { Name = "Code", Type = "string", Description = "C# code. Must contain 'return' to produce a value; otherwise returns null." }
+        }
+    }
+};
         #endregion
 
         #region Globals Wrapper
@@ -76,6 +84,34 @@ namespace AiAssistant.ExecuteUnit
                     return $"[ERROR] {Exception.Message}";
                 }
             }, Code);
+
+        public object RunCodeWithReturn(string Code)
+        => Sandbox.Exec(nameof(RunCodeWithReturn), () =>
+        {
+            try
+            {
+                string wrappedCode = $@"((Func<object>)(() => {{ {Code} }}))()";
+
+                // Add common usings and references (similar to RunCodeWithGlobals but without globals)
+                ScriptOptions options = ScriptOptions.Default
+                    .WithImports(
+                        "System",
+                        "System.IO",
+                        "System.Linq",
+                        "System.Collections.Generic",
+                        "System.Text",
+                        "System.Threading.Tasks"
+                    );
+
+                Task<object> evalTask = CSharpScript.EvaluateAsync(wrappedCode, options);
+                evalTask.Wait();
+                return evalTask.Result;
+            }
+            catch (Exception ex)
+            {
+                return $"[ERROR] {ex.Message}";
+            }
+        }, Code);
 
         /// <summary>
         /// Evaluates a C# expression or script asynchronously and returns its result.
