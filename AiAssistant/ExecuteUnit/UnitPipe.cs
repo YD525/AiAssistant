@@ -1,0 +1,582 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using AiAssistant.Memory;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using static AiAssistant.ExecuteUnit.UnitHelper;
+
+namespace AiAssistant.ExecuteUnit
+{
+    public class UnitPipe
+    {
+        #region Unit Instances
+
+        private readonly IOUnit IoUnit = new IOUnit();
+        private readonly CMDUnit CmdUnit = new CMDUnit();
+        private readonly MouseUnit MouseUnit = new MouseUnit();
+        private readonly RequestUnit RequestUnit = new RequestUnit();
+        private readonly WinApiUnit WinApiUnit = new WinApiUnit();
+        private readonly CSharpCodeUnit CSharpUnit = new CSharpCodeUnit();
+
+        #endregion
+
+        #region AI Memory
+
+        /// <summary>Single recorded step inside AIMemory.</summary>
+       
+
+        private AIMemory AIMem = new AIMemory();
+        private int _StepCounter = 0;
+
+        /// <summary>Clears all recorded steps. Called when a new user request starts.</summary>
+        public void ClearMemory()
+        {
+            AIMem.Memory.Clear();
+            _StepCounter = 0;
+        }
+
+        /// <summary>Adds a step to the memory.</summary>
+        private void AddToMemory(string Action, string Parameters, string Result, string Status, string Reason)
+        {
+            AIMem.Memory.Add(new MemoryEntry
+            {
+                StepNumber = ++_StepCounter,
+                Action = Action ?? "?",
+                Parameters = Parameters ?? "none",
+                Result = Result ?? "(no output)",
+                Status = Status,
+                Reason = Reason ?? "(no reason)"
+            });
+        }
+
+        /// <summary>Formats the whole memory as a readable text block.</summary>
+        private string FormatMemory()
+        {
+            if (AIMem.Memory.Count == 0)
+                return "No previous steps.";
+
+            var NStringBuilder = new StringBuilder();
+            NStringBuilder.AppendLine("=== HISTORY OF EXECUTED STEPS ===");
+            foreach (var entry in AIMem.Memory)
+            {
+                NStringBuilder.AppendLine($"Step {entry.StepNumber}:");
+                NStringBuilder.AppendLine($"  Action   : {entry.Action}");
+                NStringBuilder.AppendLine($"  Status   : {entry.Status}");
+                NStringBuilder.AppendLine($"  Reason   : {entry.Reason}");
+                NStringBuilder.AppendLine($"  Params   : {entry.Parameters}");
+                NStringBuilder.AppendLine($"  Result   : {entry.Result}");
+                NStringBuilder.AppendLine();
+            }
+            return NStringBuilder.ToString();
+        }
+
+        #endregion
+
+        #region Capability Registry
+
+        /// <summary>Returns the merged capability list from every registered Unit.</summary>
+        public static List<CapabilityInfo> GetCapabilities()
+        {
+            var AllCapabilities = new List<CapabilityInfo>();
+            AllCapabilities.AddRange(IOUnit.CapabilityManifest);
+            AllCapabilities.AddRange(CMDUnit.CapabilityManifest);
+            AllCapabilities.AddRange(MouseUnit.CapabilityManifest);
+            AllCapabilities.AddRange(RequestUnit.CapabilityManifest);
+            AllCapabilities.AddRange(WinApiUnit.CapabilityManifest);
+            AllCapabilities.AddRange(CSharpCodeUnit.CapabilityManifest);
+            return AllCapabilities;
+        }
+
+        #endregion
+
+        #region Prompt Generation
+
+        /// <summary>
+        /// Appends the shared role definition, JSON format rules (including the Continue field),
+        /// efficiency rules, examples, and the full capability list into Builder.
+        /// </summary>
+        private static void AppendRulesAndCapabilities(StringBuilder Builder, string ContextInstruction)
+        {
+            Builder.AppendLine("You are an AI assistant that controls a Windows PC on behalf of the user.");
+            Builder.AppendLine("You must respond ONLY with a single JSON object — no explanation, no markdown, no extra text.");
+            Builder.AppendLine();
+
+            // ===== NEW EFFICIENCY RULES =====
+            Builder.AppendLine("=== EFFICIENCY RULES ===");
+            Builder.AppendLine("1. If completing the user request would require MORE THAN 5 STEPS using simple capabilities (e.g., GetFiles, DeleteToRecycleBin, Copy, Move, Click, etc.), you MUST instead use a batch capability:");
+            Builder.AppendLine("   - Use 'ExecuteAndGetOutput' with a CMD command that handles multiple items (e.g., 'del /s', 'copy', 'move', 'for %i in ...').");
+            Builder.AppendLine("   - Or use 'RunCode' to write a short C# script that performs all operations in a loop.");
+            Builder.AppendLine("2. Only use single-item capabilities when the task involves exactly one item or when a batch command is impossible (e.g., conditional logic per file).");
+            Builder.AppendLine("3. Always prefer completing the entire task in 1–3 steps over many small steps.");
+            Builder.AppendLine("4. If you already executed 5 or more steps and the task is not finished, stop and switch to a CMD or C# approach in the next step.");
+            Builder.AppendLine();
+
+            Builder.AppendLine("=== RESPONSE FORMAT ===");
+            Builder.AppendLine("{");
+            Builder.AppendLine("  \"Action\"   : \"<CapabilityName or Reply>\",");
+            Builder.AppendLine("  \"Params\"   : { \"<ParamName>\": <value> },");
+            Builder.AppendLine("  \"Reason\"   : \"<one sentence: why you chose this action>\",");
+            Builder.AppendLine("  \"Continue\" : <true | false>");
+            Builder.AppendLine("}");
+            Builder.AppendLine();
+            Builder.AppendLine("Continue field rules:");
+            Builder.AppendLine("  true  — you need to execute another capability after this one.");
+            Builder.AppendLine("  false — the task is fully complete; use Action = \"Reply\" to tell the user.");
+            Builder.AppendLine();
+            Builder.AppendLine(ContextInstruction);
+            Builder.AppendLine();
+
+            Builder.AppendLine("=== EXAMPLE: batch deletion using CMD (preferred) ===");
+            Builder.AppendLine("{");
+            Builder.AppendLine("  \"Action\"   : \"ExecuteAndGetOutput\",");
+            Builder.AppendLine("  \"Params\"   : { \"Command\": \"del /s C:\\\\Temp\\\\*.log\", \"TimeoutMs\": 30000 },");
+            Builder.AppendLine("  \"Reason\"   : \"Deleting all .log files in one command instead of looping through each file.\",");
+            Builder.AppendLine("  \"Continue\" : false");
+            Builder.AppendLine("}");
+            Builder.AppendLine();
+
+            Builder.AppendLine("=== EXAMPLE: batch operation using C# code ===");
+            Builder.AppendLine("{");
+            Builder.AppendLine("  \"Action\"   : \"RunCode\",");
+            Builder.AppendLine("  \"Params\"   : { \"Code\": \"using System.IO; foreach(var f in Directory.GetFiles(@\"C:\\Temp\", \"*.log\", SearchOption.AllDirectories)) File.Delete(f);\" },");
+            Builder.AppendLine("  \"Reason\"   : \"C# loop deletes all .log files recursively in one step.\",");
+            Builder.AppendLine("  \"Continue\" : false");
+            Builder.AppendLine("}");
+            Builder.AppendLine();
+
+            Builder.AppendLine("=== EXAMPLE: more steps needed (only when batch is impossible) ===");
+            Builder.AppendLine("{");
+            Builder.AppendLine("  \"Action\"   : \"ExecuteAndGetOutput\",");
+            Builder.AppendLine("  \"Params\"   : { \"Command\": \"dir C:\\\\\", \"TimeoutMs\": 5000 },");
+            Builder.AppendLine("  \"Reason\"   : \"Need to list files before proceeding\",");
+            Builder.AppendLine("  \"Continue\" : true");
+            Builder.AppendLine("}");
+            Builder.AppendLine();
+
+            Builder.AppendLine("=== EXAMPLE: task complete ===");
+            Builder.AppendLine("{");
+            Builder.AppendLine("  \"Action\"   : \"Reply\",");
+            Builder.AppendLine("  \"Params\"   : { \"Message\": \"Done. Here are the results: ...\" },");
+            Builder.AppendLine("  \"Reason\"   : \"Task is complete\",");
+            Builder.AppendLine("  \"Continue\" : false");
+            Builder.AppendLine("}");
+            Builder.AppendLine();
+
+            Builder.AppendLine("=== AVAILABLE CAPABILITIES ===");
+
+            foreach (CapabilityInfo Capability in GetCapabilities())
+            {
+                Builder.AppendLine($"[{Capability.Name}]");
+                Builder.AppendLine($"  Description : {Capability.Description}");
+
+                if (Capability.Params != null && Capability.Params.Count > 0)
+                {
+                    Builder.AppendLine("  Parameters  :");
+                    foreach (UnitHelper.ParameterInfo Param in Capability.Params)
+                        Builder.AppendLine($"    - {Param.Name} ({Param.Type}): {Param.Description}");
+                }
+                else
+                {
+                    Builder.AppendLine("  Parameters  : none");
+                }
+
+                Builder.AppendLine();
+            }
+        }
+
+        /// <summary>
+        /// Builds the first prompt from a user's natural-language input.
+        /// Clears the memory because a new conversation starts.
+        /// </summary>
+        public string BuildUserPrompt(string UserInput)
+        {
+            ClearMemory();  // Start fresh
+
+            var Builder = new StringBuilder();
+
+            AppendRulesAndCapabilities(Builder,
+                "Decide which capability to call first, or reply directly if no action is needed.");
+
+            Builder.AppendLine("=== USER REQUEST ===");
+            Builder.AppendLine(UserInput?.Trim());
+
+            return Builder.ToString();
+        }
+
+        /// <summary>
+        /// Builds a follow-up prompt after a capability has executed.
+        /// Feeds the result back to the AI, including the whole memory of previous steps.
+        /// </summary>
+        public string BuildResultPrompt(string UserInput, ExecutionResult Result)
+        {
+            var Builder = new StringBuilder();
+
+            AppendRulesAndCapabilities(Builder,
+                "Analyze the execution result below. Use the history to avoid repeating actions. " +
+                "If you already used 5 or more steps and the task is not complete, switch to a batch command or C# code immediately. " +
+                "Set Continue = true if more steps are needed, or Continue = false and Action = \"Reply\" when done.");
+
+            Builder.AppendLine("=== ORIGINAL USER REQUEST ===");
+            Builder.AppendLine(UserInput?.Trim());
+            Builder.AppendLine();
+
+            // Include the whole memory so AI never forgets previous steps
+            Builder.AppendLine(FormatMemory());
+            Builder.AppendLine();
+
+            Builder.AppendLine("=== MOST RECENT EXECUTION RESULT ===");
+            Builder.AppendLine($"Action : {Result.Action}");
+            Builder.AppendLine($"Status : {Result.Status}");
+            Builder.AppendLine($"Reason : {Result.Reason}");
+
+            if (Result.Status == "Failure")
+            {
+                Builder.AppendLine($"Error  : {Result.ErrorMessage}");
+            }
+            else if (Result.ReturnValue != null)
+            {
+                string ReturnText = Result.ReturnValue is string StringValue
+                    ? StringValue
+                    : JsonConvert.SerializeObject(Result.ReturnValue, Formatting.Indented);
+
+                Builder.AppendLine("Output :");
+                Builder.AppendLine(ReturnText);
+            }
+            else
+            {
+                Builder.AppendLine("Output : (none)");
+            }
+
+            return Builder.ToString();
+        }
+
+        #endregion
+
+        #region AI Response Parsing & Dispatch
+
+        /// <summary>
+        /// Parses the AI's JSON response, dispatches the capability, records the step in AIMemory,
+        /// and returns an ExecutionResult.
+        /// </summary>
+        public ExecutionResult AnalysisAndExecuteCapabilities(string AiJsonResponse)
+        {
+            // --- Step 1: Parse JSON ---
+            JObject ParsedJson;
+            try
+            {
+                ParsedJson = JObject.Parse(AiJsonResponse.Trim());
+            }
+            catch (JsonException ParseException)
+            {
+                var failResult = ExecutionResult.Failure(
+                    "ParseError",
+                    $"AI response is not valid JSON: {ParseException.Message}",
+                    AiJsonResponse,
+                    Continue: false
+                );
+                // Record the failed parse in memory
+                AddToMemory("ParseError", AiJsonResponse, ParseException.Message, "Failure", "Invalid JSON");
+                // Because Continue = false, we clear memory now (task cannot continue)
+                ClearMemory();
+                return failResult;
+            }
+
+            // --- Step 2: Extract fields ---
+            string ActionName = ParsedJson["Action"]?.Value<string>();
+            string Reason = ParsedJson["Reason"]?.Value<string>() ?? "(no reason given)";
+            bool Continue = ParsedJson["Continue"]?.Value<bool>() ?? false;
+            JObject Params = ParsedJson["Params"] as JObject ?? new JObject();
+            string ParamsString = Params.ToString(Formatting.None); // for memory
+
+            if (string.IsNullOrWhiteSpace(ActionName))
+            {
+                var FailResult = ExecutionResult.Failure(
+                    "MissingAction",
+                    "The AI response JSON does not contain an 'Action' field.",
+                    AiJsonResponse,
+                    Continue: false
+                );
+                AddToMemory("MissingAction", ParamsString, "No Action field", "Failure", Reason);
+                ClearMemory();
+                return FailResult;
+            }
+
+            // --- Step 3: Text-only reply — task is done ---
+            if (ActionName == "Reply")
+            {
+                string ReplyText = Params["Message"]?.Value<string>() ?? "";
+                var replyResult = ExecutionResult.TextReply(ReplyText, Reason);
+                // Record the final reply in memory
+                AddToMemory("Reply", ParamsString, ReplyText, "Reply", Reason);
+                // Task ends -> clear memory as requested
+                ClearMemory();
+                return replyResult;
+            }
+
+            // --- Step 4: Dispatch capability ---
+            try
+            {
+                object ResultValue = Dispatch(ActionName, Params);
+                string ResultString = ResultValue != null
+                    ? JsonConvert.SerializeObject(ResultValue, Formatting.Indented)
+                    : "(void)";
+
+                // Successful execution
+                var SuccessResult = ExecutionResult.Success(ActionName, Reason, ResultValue, Continue);
+                AddToMemory(ActionName, ParamsString, ResultString, "Success", Reason);
+
+                // If the AI says "Continue = false", clear memory now (task completed)
+                if (!Continue)
+                    ClearMemory();
+
+                return SuccessResult;
+            }
+            catch (NotSupportedException)
+            {
+                var FailResult = ExecutionResult.Failure(
+                    "UnknownAction",
+                    $"No capability named '{ActionName}' is registered.",
+                    AiJsonResponse,
+                    Continue: false
+                );
+                AddToMemory(ActionName, ParamsString, "Unknown capability", "Failure", Reason);
+                ClearMemory();
+                return FailResult;
+            }
+            catch (Exception DispatchException)
+            {
+                var FailResult = ExecutionResult.Failure(
+                    "ExecutionError",
+                    $"Capability '{ActionName}' threw an exception: {DispatchException.Message}",
+                    AiJsonResponse,
+                    Continue: false
+                );
+                AddToMemory(ActionName, ParamsString, DispatchException.Message, "Failure", Reason);
+                ClearMemory();
+                return FailResult;
+            }
+        }
+
+        /// <summary>
+        /// Routes the action name to the correct Unit and invokes it.
+        /// Throws NotSupportedException if no match is found.
+        /// </summary>
+        private object Dispatch(string ActionName, JObject Params)
+        {
+            // ---- IOUnit ----
+            if (IOUnit.CapabilityManifest.Any(Cap => Cap.Name == ActionName))
+            {
+                switch (ActionName)
+                {
+                    case "GetFiles":
+                        return IoUnit.GetFiles(
+                            Params["Path"]?.Value<string>(),
+                            Params["Recursive"]?.Value<bool>() ?? false);
+                    case "ReadText":
+                        return IoUnit.ReadText(Params["Path"]?.Value<string>());
+                    case "WriteText":
+                        IoUnit.WriteText(
+                            Params["Path"]?.Value<string>(),
+                            Params["Content"]?.Value<string>(),
+                            Params["Overwrite"]?.Value<bool>() ?? true);
+                        return null;
+                    case "Move":
+                        IoUnit.Move(
+                            Params["Source"]?.Value<string>(),
+                            Params["Dest"]?.Value<string>(),
+                            Params["Overwrite"]?.Value<bool>() ?? true);
+                        return null;
+                    case "Copy":
+                        IoUnit.Copy(
+                            Params["Source"]?.Value<string>(),
+                            Params["Dest"]?.Value<string>(),
+                            Params["Overwrite"]?.Value<bool>() ?? true);
+                        return null;
+                    case "DeleteToRecycleBin":
+                        IoUnit.DeleteToRecycleBin(Params["Path"]?.Value<string>());
+                        return null;
+                    case "CreateDirectory":
+                        IoUnit.CreateDirectory(Params["Path"]?.Value<string>());
+                        return null;
+                }
+            }
+
+            // ---- CMDUnit ----
+            if (CMDUnit.CapabilityManifest.Any(Cap => Cap.Name == ActionName))
+            {
+                switch (ActionName)
+                {
+                    case "ExecuteAndGetOutput":
+                        return CmdUnit.ExecuteAndGetOutput(
+                            Params["Command"]?.Value<string>(),
+                            Params["TimeoutMs"]?.Value<int>() ?? 10000);
+                }
+            }
+
+            // ---- MouseUnit ----
+            if (MouseUnit.CapabilityManifest.Any(Cap => Cap.Name == ActionName))
+            {
+                switch (ActionName)
+                {
+                    case "Click":
+                        MouseUnit.Click(
+                            Params["X"]?.Value<double>() ?? 0,
+                            Params["Y"]?.Value<double>() ?? 0,
+                            Params["Mode"]?.Value<int>() ?? 0);
+                        return null;
+                    case "GetCursorPosition":
+                        return MouseUnit.GetCursorPosition();
+                }
+            }
+
+            // ---- RequestUnit ----
+            if (RequestUnit.CapabilityManifest.Any(Cap => Cap.Name == ActionName))
+            {
+                switch (ActionName)
+                {
+                    case "HttpGet":
+                        return RequestUnit.HttpGet(
+                            Params["Url"]?.Value<string>(),
+                            Params["TimeoutMs"]?.Value<int>() ?? 10000);
+                    case "HttpPost":
+                        return RequestUnit.HttpPost(
+                            Params["Url"]?.Value<string>(),
+                            Params["Body"]?.Value<string>(),
+                            Params["ContentType"]?.Value<string>() ?? "application/json",
+                            Params["TimeoutMs"]?.Value<int>() ?? 10000);
+                }
+            }
+
+            // ---- WinApiUnit ----
+            if (WinApiUnit.CapabilityManifest.Any(Cap => Cap.Name == ActionName))
+            {
+                switch (ActionName)
+                {
+                    case "GetForegroundWindow":
+                        return WinApiUnit.GetForegroundWindowHandle();
+                    case "FindWindow":
+                        return WinApiUnit.FindWindowHandle(
+                            Params["ClassName"]?.Value<string>(),
+                            Params["Title"]?.Value<string>());
+                    case "FindWindows":
+                        return WinApiUnit.FindAllWindows();
+                    case "GetWindowText":
+                        return WinApiUnit.GetWindowTitle(
+                            new IntPtr(Params["Hwnd"]?.Value<long>() ?? 0));
+                    case "SetWindowText":
+                        return WinApiUnit.SetWindowTitle(
+                            new IntPtr(Params["Hwnd"]?.Value<long>() ?? 0),
+                            Params["Text"]?.Value<string>());
+                    case "EnumProcesses":
+                        return WinApiUnit.EnumProcesses();
+                    case "KillProcess":
+                        return WinApiUnit.KillProcess(
+                            Params["Pid"]?.Value<int>() ?? -1,
+                            Params["Name"]?.Value<string>());
+                    case "GetProcessIdUnderMouse":
+                        return WinApiUnit.GetProcessIdUnderMouse();
+                    case "GetProcessInfo":
+                        return WinApiUnit.GetProcessInfo(
+                            Params["Pid"]?.Value<int>() ?? -1);
+                    case "GetProcessUnderMouse":
+                        return WinApiUnit.GetProcessUnderMouse();
+                    case "SendMessage":
+                        return WinApiUnit.SendWindowMessage(
+                            new IntPtr(Params["Hwnd"]?.Value<long>() ?? 0),
+                            Params["Msg"]?.Value<int>() ?? 0,
+                            new IntPtr(Params["WParam"]?.Value<long>() ?? 0),
+                            new IntPtr(Params["LParam"]?.Value<long>() ?? 0));
+                    case "PostMessage":
+                        return WinApiUnit.PostWindowMessage(
+                            new IntPtr(Params["Hwnd"]?.Value<long>() ?? 0),
+                            Params["Msg"]?.Value<int>() ?? 0,
+                            new IntPtr(Params["WParam"]?.Value<long>() ?? 0),
+                            new IntPtr(Params["LParam"]?.Value<long>() ?? 0));
+                }
+            }
+
+            // ---- CSharpCodeUnit ----
+            if (CSharpCodeUnit.CapabilityManifest.Any(Cap => Cap.Name == ActionName))
+            {
+                switch (ActionName)
+                {
+                    case "RunCode":
+                        return CSharpUnit.RunCode(Params["Code"]?.Value<string>());
+                    case "RunCodeWithGlobals":
+                        return CSharpUnit.RunCodeWithGlobals(
+                            Params["Code"]?.Value<string>(),
+                            Params["Globals"]?.ToObject<object>());
+                }
+            }
+
+            throw new NotSupportedException($"No capability named '{ActionName}' found in any Unit.");
+        }
+
+        #endregion
+    }
+    /// <summary>
+    /// Describes the outcome of a single AI-driven capability execution.
+    /// </summary>
+    public class ExecutionResult
+    {
+        /// <summary>"Success" | "Failure" | "Reply"</summary>
+        public string Status { get; set; }
+
+        /// <summary>The capability name that was executed, or "Reply" / error code.</summary>
+        public string Action { get; set; }
+
+        /// <summary>The AI's stated reason for choosing this action.</summary>
+        public string Reason { get; set; }
+
+        /// <summary>
+        /// Directly reflects the "Continue" field the AI returned in its JSON.
+        /// true  → call BuildResultPrompt + AnalysisAndExecuteCapabilities again.
+        /// false → task is done; if Status == "Reply", show ReturnValue to the user.
+        /// </summary>
+        public bool Continue { get; set; }
+
+        /// <summary>Value returned by the capability. Null for void methods.</summary>
+        public object ReturnValue { get; set; }
+
+        /// <summary>Error description when Status == "Failure".</summary>
+        public string ErrorMessage { get; set; }
+
+        /// <summary>Raw AI response string, kept for diagnostics.</summary>
+        public string RawResponse { get; set; }
+
+        // ---- Factory methods ----
+
+        public static ExecutionResult Success(string Action, string Reason, object ReturnValue, bool Continue)
+            => new ExecutionResult
+            {
+                Status = "Success",
+                Action = Action,
+                Reason = Reason,
+                ReturnValue = ReturnValue,
+                Continue = Continue
+            };
+
+        public static ExecutionResult Failure(string Action, string ErrorMessage, string RawResponse, bool Continue)
+            => new ExecutionResult
+            {
+                Status = "Failure",
+                Action = Action,
+                ErrorMessage = ErrorMessage,
+                RawResponse = RawResponse,
+                Continue = Continue
+            };
+
+        /// <summary>Always sets Continue = false because a Reply means the task is done.</summary>
+        public static ExecutionResult TextReply(string Message, string Reason)
+            => new ExecutionResult
+            {
+                Status = "Reply",
+                Action = "Reply",
+                Reason = Reason,
+                ReturnValue = Message,
+                Continue = false
+            };
+    }
+}
