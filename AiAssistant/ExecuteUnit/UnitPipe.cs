@@ -324,7 +324,7 @@ namespace AiAssistant.ExecuteUnit
             if (HasMoreSteps)
             {
                 string ReplyText = Params["Message"]?.Value<string>() ?? "";
-                var ReplyResult = ExecutionResult.TextReply(ActionName,ReplyText, Reason);
+                var ReplyResult = ExecutionResult.Keep(ActionName,ReplyText, Reason);
                 AddToMemory("Reply", ParamsString, ReplyText, "Reply", Reason);
                 ClearMemory();   // Task complete
                 return ReplyResult;
@@ -581,15 +581,14 @@ namespace AiAssistant.ExecuteUnit
                 Continue = Continue
             };
 
-        /// <summary>Always sets Continue = false because a Reply means the task is done.</summary>
-        public static ExecutionResult TextReply(string Action,string Message, string Reason)
+        public static ExecutionResult Keep(string Action,string Message, string Reason)
             => new ExecutionResult
             {
                 Status = "HasMoreSteps",
                 Action = Action,
                 Reason = Reason,
                 ReturnValue = Message,
-                Continue = false
+                Continue = true
             };
     }
 }

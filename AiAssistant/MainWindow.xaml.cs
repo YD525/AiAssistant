@@ -115,11 +115,10 @@ namespace AiAssistant
                                 if (RetryCount >= MaxRetry)
                                 {
                                     SetLog("RetryExceeded", $"Reached max retries ({MaxRetry}), task aborted.");
-                                    MessageBox.Show($"Task failed after {MaxRetry} retries.\n\nLast error: {Result.ErrorMessage}");
                                     break;
                                 }
 
-                                Prompt = Pipe.BuildErrorRetryPrompt(UserInput, Result);
+                                Prompt = Pipe.BuildErrorRetryPrompt(UserInput + "\n[ScriptException]" + Result.ErrorMessage, Result);
                                 SetLog("ErrorRetryPrompt", Prompt);
                             }
                             else
