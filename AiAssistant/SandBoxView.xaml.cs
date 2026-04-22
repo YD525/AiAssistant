@@ -26,6 +26,7 @@ namespace AiAssistant
         public void SetCommand(string Command)
         {
             CommandBox.Text = Command;
+            this.Show();
         }
 
         public bool? Pass = null;

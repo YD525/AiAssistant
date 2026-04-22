@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:AiAssistant"
         mc:Ignorable="d"
-        Title="SandBoxView" Height="450" Width="800" Background="#FF373737">
+        Title="SandBoxView" Height="450" Width="800" Background="#FF373737" Topmost="True" WindowStartupLocation="CenterScreen">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="50"/>

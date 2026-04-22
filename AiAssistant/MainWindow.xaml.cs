@@ -54,19 +54,19 @@ namespace AiAssistant
 
                             if (AICenter.Gemini != null)
                             {
-                                AiReply = AICenter.Gemini.QueryAI(UserInput);
+                                AiReply = AICenter.Gemini.QueryAI(Prompt);
                                 SetLog("Gemini", AiReply);
                             }
                             else
                             if (AICenter.ChatGpt != null)
                             {
-                                AiReply = AICenter.ChatGpt.QueryAI(UserInput);
+                                AiReply = AICenter.ChatGpt.QueryAI(Prompt);
                                 SetLog("ChatGpt", AiReply);
                             }
                             else
                             if (AICenter.LocalAI != null)
                             {
-                                AiReply = AICenter.LocalAI.QueryAI(UserInput);
+                                AiReply = AICenter.LocalAI.QueryAI(Prompt);
                                 SetLog("LocalAI", AiReply);
                             }
 
@@ -336,11 +336,13 @@ namespace AiAssistant
                                     {
                                         StateLight.Fill = new SolidColorBrush(Colors.Black);
                                         Pipe.CmdUnit.Enable = false;
+                                        AICenter.LocalSetting.EnableCMDUnit = false;
                                     }
                                     else
                                     {
                                         StateLight.Fill = new SolidColorBrush(Colors.Blue);
                                         Pipe.CmdUnit.Enable = true;
+                                        AICenter.LocalSetting.EnableCMDUnit = true;
                                     }
                                 }
                             break;
@@ -350,11 +352,13 @@ namespace AiAssistant
                                     {
                                         StateLight.Fill = new SolidColorBrush(Colors.Black);
                                         Pipe.CSharpUnit.Enable = false;
+                                        AICenter.LocalSetting.EnableCSharpCodeUnit = false;
                                     }
                                     else
                                     {
                                         StateLight.Fill = new SolidColorBrush(Colors.Blue);
                                         Pipe.CSharpUnit.Enable = true;
+                                        AICenter.LocalSetting.EnableCSharpCodeUnit = true;
                                     }
                                 }
                             break;
@@ -364,11 +368,13 @@ namespace AiAssistant
                                     {
                                         StateLight.Fill = new SolidColorBrush(Colors.Black);
                                         Pipe.IoUnit.Enable = false;
+                                        AICenter.LocalSetting.EnableIOUnit = false;
                                     }
                                     else
                                     {
                                         StateLight.Fill = new SolidColorBrush(Colors.Blue);
                                         Pipe.IoUnit.Enable = true;
+                                        AICenter.LocalSetting.EnableIOUnit = true;
                                     }
                                 }
                             break;
@@ -378,11 +384,13 @@ namespace AiAssistant
                                     {
                                         StateLight.Fill = new SolidColorBrush(Colors.Black);
                                         Pipe.MouseUnit.Enable = false;
+                                        AICenter.LocalSetting.EnableMouseUnit = false;
                                     }
                                     else
                                     {
                                         StateLight.Fill = new SolidColorBrush(Colors.Blue);
                                         Pipe.MouseUnit.Enable = true;
+                                        AICenter.LocalSetting.EnableMouseUnit = true;
                                     }
                                 }
                             break;
@@ -392,11 +400,13 @@ namespace AiAssistant
                                     {
                                         StateLight.Fill = new SolidColorBrush(Colors.Black);
                                         Pipe.RequestUnit.Enable = false;
+                                        AICenter.LocalSetting.EnableRequestUnit = false;
                                     }
                                     else
                                     {
                                         StateLight.Fill = new SolidColorBrush(Colors.Blue);
                                         Pipe.RequestUnit.Enable = true;
+                                        AICenter.LocalSetting.EnableRequestUnit = true;
                                     }
                                 }
                             break;
@@ -406,11 +416,13 @@ namespace AiAssistant
                                     {
                                         StateLight.Fill = new SolidColorBrush(Colors.Black);
                                         Pipe.WinApiUnit.Enable = false;
+                                        AICenter.LocalSetting.EnableWinApiUnit = false;
                                     }
                                     else
                                     {
                                         StateLight.Fill = new SolidColorBrush(Colors.Blue);
                                         Pipe.WinApiUnit.Enable = true;
+                                        AICenter.LocalSetting.EnableWinApiUnit = true;
                                     }
                                 }
                             break;
@@ -423,6 +435,11 @@ namespace AiAssistant
         private void ShowAIConfig(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
             new AIConfig().Show();
+        }
+
+        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            DeFine.CloseAny();
         }
     }
 }

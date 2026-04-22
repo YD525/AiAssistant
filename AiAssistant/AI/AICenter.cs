@@ -108,7 +108,7 @@ namespace AiAssistant.AI
             if (LocalSetting.EnableLMStudio)
             {
                 LocalAI = new LMStudio();
-                LocalAI.Init(LocalAI.LocalPort);
+                LocalAI.Init(LocalSetting.LMStudioPort);
             }
             else
             {
@@ -132,19 +132,19 @@ namespace AiAssistant.AI
             LocalSetting = JsonConvert.DeserializeObject<AISetting>(
                 Encoding.UTF8.GetString(
                     DataHelper.ReadFile(
-                        ConfigPath))) ;
+                        ConfigPath)));
 
-            if(LocalSetting.ChatGptKey!=null)
-            if (LocalSetting.ChatGptKey.Length > 0)
-            {
-                LocalSetting.ChatGptKey = XORDecrypt(LocalSetting.ChatGptKey);
-            }
+            if (LocalSetting.ChatGptKey != null)
+                if (LocalSetting.ChatGptKey.Length > 0)
+                {
+                    LocalSetting.ChatGptKey = XORDecrypt(LocalSetting.ChatGptKey);
+                }
 
-            if(LocalSetting.GeminiKey!=null)
-            if (LocalSetting.GeminiKey.Length > 0)
-            {
-                LocalSetting.GeminiKey = XORDecrypt(LocalSetting.GeminiKey);
-            }
+            if (LocalSetting.GeminiKey != null)
+                if (LocalSetting.GeminiKey.Length > 0)
+                {
+                    LocalSetting.GeminiKey = XORDecrypt(LocalSetting.GeminiKey);
+                }
         }
 
         public static void Save()
@@ -153,19 +153,21 @@ namespace AiAssistant.AI
 
             var TempLocalSetting = LocalSetting.Clone();
 
-            if (TempLocalSetting.ChatGptKey.Length > 0)
-            {
-                TempLocalSetting.ChatGptKey = XOREncrypt(TempLocalSetting.ChatGptKey);
-            }
+            if (LocalSetting.ChatGptKey != null)
+                if (TempLocalSetting.ChatGptKey.Length > 0)
+                {
+                    TempLocalSetting.ChatGptKey = XOREncrypt(TempLocalSetting.ChatGptKey);
+                }
 
-            if (TempLocalSetting.GeminiKey.Length > 0)
-            {
-                TempLocalSetting.GeminiKey = XOREncrypt(TempLocalSetting.GeminiKey);
-            }
+            if (LocalSetting.GeminiKey != null)
+                if (TempLocalSetting.GeminiKey.Length > 0)
+                {
+                    TempLocalSetting.GeminiKey = XOREncrypt(TempLocalSetting.GeminiKey);
+                }
 
             string GetJson = JsonConvert.SerializeObject(LocalSetting);
 
-            DataHelper.WriteFile(ConfigPath,Encoding.UTF8.GetBytes(GetJson));
+            DataHelper.WriteFile(ConfigPath, Encoding.UTF8.GetBytes(GetJson));
         }
     }
 }
