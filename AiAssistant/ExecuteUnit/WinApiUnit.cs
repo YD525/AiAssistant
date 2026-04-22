@@ -112,18 +112,6 @@ namespace AiAssistant.ExecuteUnit
             },
             new CapabilityInfo
             {
-                Name        = "SendMessage",
-                Description = "Send a synchronous Win32 message to a window and wait for it to be processed",
-                Params      = new List<ParameterInfo>
-                {
-                    new ParameterInfo { Name = "Hwnd",   Type = "IntPtr", Description = "Target window handle" },
-                    new ParameterInfo { Name = "Msg",    Type = "int",    Description = "Windows message identifier" },
-                    new ParameterInfo { Name = "WParam", Type = "IntPtr", Description = "First message parameter" },
-                    new ParameterInfo { Name = "LParam", Type = "IntPtr", Description = "Second message parameter" }
-                }
-            },
-            new CapabilityInfo
-            {
                 Name        = "PostMessage",
                 Description = "Post an asynchronous Win32 message to a window's message queue",
                 Params      = new List<ParameterInfo>

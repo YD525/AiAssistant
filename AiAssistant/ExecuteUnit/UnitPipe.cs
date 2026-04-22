@@ -103,8 +103,6 @@ namespace AiAssistant.ExecuteUnit
 
             Builder.AppendLine("=== EFFICIENCY RULES ===");
             Builder.AppendLine("1. If completing the user request would require MORE THAN 5 STEPS using simple capabilities (e.g., GetFiles, DeleteToRecycleBin, Copy, Move, Click, etc.), you MUST instead use a batch capability:");
-            Builder.AppendLine("   - Use 'ExecuteAndGetOutput' with a CMD command that handles multiple items (e.g., 'del /s', 'copy', 'move', 'for %i in ...').");
-            Builder.AppendLine("   - Or use 'RunCode' to write a short C# script that performs all operations in a loop.");
             Builder.AppendLine("2. Only use single-item capabilities when the task involves exactly one item or when a batch command is impossible (e.g., conditional logic per file).");
             Builder.AppendLine("3. Always prefer completing the entire task in 1–3 steps over many small steps.");
             Builder.AppendLine("4. If you already executed 5 or more steps and the task is not finished, stop and switch to a CMD or C# approach in the next step.");
