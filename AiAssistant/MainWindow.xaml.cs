@@ -74,7 +74,14 @@ namespace AiAssistant
 
                             if (AiReply == "")
                             {
+                                ExecuteBtn.Dispatcher.Invoke(new Action(() =>
+                                {
+                                    ExecuteBtn.Content = "Execute";
+                                }));
+                                ExecuteTrd = null;
+
                                 MessageBox.Show("You have not enabled AI or there is a network error.");
+
                                 return;
                             }
 
@@ -84,7 +91,7 @@ namespace AiAssistant
                             if (!Result.Continue)
                             {
                                 SetLog("Complete", ConvertHelper.ObjToStr(Result.ReturnValue));
-                                MessageBox.Show(ConvertHelper.ObjToStr(Result.ReturnValue));
+                                //MessageBox.Show(ConvertHelper.ObjToStr(Result.ReturnValue));
                                 break;
                             }
 
