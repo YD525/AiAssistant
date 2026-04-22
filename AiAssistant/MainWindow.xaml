@@ -110,7 +110,7 @@
                     </Label>
                 </Border>
 
-                <TextBox IsReadOnly="True" Name="Log" Height="100" Margin="0 5 0 0" VerticalScrollBarVisibility="Auto" Foreground="White" CaretBrush="White" Background="{x:Null}" BorderThickness="0" BorderBrush="{x:Null}">
+                <TextBox IsReadOnly="True" Name="Log" Height="200" Margin="0 5 0 0" VerticalScrollBarVisibility="Auto" Foreground="White" CaretBrush="White" Background="{x:Null}" BorderThickness="0" BorderBrush="{x:Null}">
                 </TextBox>
             </StackPanel>
            

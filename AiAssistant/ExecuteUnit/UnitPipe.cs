@@ -24,13 +24,10 @@ namespace AiAssistant.ExecuteUnit
 
         #region AI Memory
 
-        /// <summary>Single recorded step inside AIMemory.</summary>
-       
-
         private AIMemory AIMem = new AIMemory();
         private int _StepCounter = 0;
 
-        /// <summary>Clears all recorded steps. Called when a new user request starts.</summary>
+        /// <summary>Clears all recorded steps. Called when a new user request starts or task fully ends.</summary>
         public void ClearMemory()
         {
             AIMem.Memory.Clear();
@@ -80,18 +77,12 @@ namespace AiAssistant.ExecuteUnit
         public List<CapabilityInfo> GetCapabilities()
         {
             var AllCapabilities = new List<CapabilityInfo>();
-            if(IoUnit.Enable)
-            AllCapabilities.AddRange(IOUnit.CapabilityManifest);
-            if(CmdUnit.Enable)
-            AllCapabilities.AddRange(CMDUnit.CapabilityManifest);
-            if(MouseUnit.Enable)
-            AllCapabilities.AddRange(MouseUnit.CapabilityManifest);
-            if(RequestUnit.Enable)
-            AllCapabilities.AddRange(RequestUnit.CapabilityManifest);
-            if(WinApiUnit.Enable)
-            AllCapabilities.AddRange(WinApiUnit.CapabilityManifest);
-            if (CSharpUnit.Enable)
-            AllCapabilities.AddRange(CSharpCodeUnit.CapabilityManifest);
+            if (IoUnit.Enable) AllCapabilities.AddRange(IOUnit.CapabilityManifest);
+            if (CmdUnit.Enable) AllCapabilities.AddRange(CMDUnit.CapabilityManifest);
+            if (MouseUnit.Enable) AllCapabilities.AddRange(MouseUnit.CapabilityManifest);
+            if (RequestUnit.Enable) AllCapabilities.AddRange(RequestUnit.CapabilityManifest);
+            if (WinApiUnit.Enable) AllCapabilities.AddRange(WinApiUnit.CapabilityManifest);
+            if (CSharpUnit.Enable) AllCapabilities.AddRange(CSharpCodeUnit.CapabilityManifest);
             return AllCapabilities;
         }
 
@@ -109,7 +100,6 @@ namespace AiAssistant.ExecuteUnit
             Builder.AppendLine("You must respond ONLY with a single JSON object — no explanation, no markdown, no extra text.");
             Builder.AppendLine();
 
-            // ===== NEW EFFICIENCY RULES =====
             Builder.AppendLine("=== EFFICIENCY RULES ===");
             Builder.AppendLine("1. If completing the user request would require MORE THAN 5 STEPS using simple capabilities (e.g., GetFiles, DeleteToRecycleBin, Copy, Move, Click, etc.), you MUST instead use a batch capability:");
             Builder.AppendLine("   - Use 'ExecuteAndGetOutput' with a CMD command that handles multiple items (e.g., 'del /s', 'copy', 'move', 'for %i in ...').");
@@ -146,7 +136,7 @@ namespace AiAssistant.ExecuteUnit
             Builder.AppendLine("=== EXAMPLE: batch operation using C# code ===");
             Builder.AppendLine("{");
             Builder.AppendLine("  \"Action\"   : \"RunCode\",");
-            Builder.AppendLine("  \"Params\"   : { \"Code\": \"using System.IO; foreach(var f in Directory.GetFiles(@\"C:\\Temp\", \"*.log\", SearchOption.AllDirectories)) File.Delete(f);\" },");
+            Builder.AppendLine("  \"Params\"   : { \"Code\": \"using System.IO; foreach(var f in Directory.GetFiles(@\\\"C:\\\\Temp\\\"\\\", \\\"*.log\\\", SearchOption.AllDirectories)) File.Delete(f);\" },");
             Builder.AppendLine("  \"Reason\"   : \"C# loop deletes all .log files recursively in one step.\",");
             Builder.AppendLine("  \"Continue\" : false");
             Builder.AppendLine("}");
@@ -171,7 +161,6 @@ namespace AiAssistant.ExecuteUnit
             Builder.AppendLine();
 
             Builder.AppendLine("=== AVAILABLE CAPABILITIES ===");
-
             foreach (CapabilityInfo Capability in GetCapabilities())
             {
                 Builder.AppendLine($"[{Capability.Name}]");
@@ -198,10 +187,9 @@ namespace AiAssistant.ExecuteUnit
         /// </summary>
         public string BuildUserPrompt(string UserInput)
         {
-            ClearMemory();  // Start fresh
+            ClearMemory();
 
             var Builder = new StringBuilder();
-
             AppendRulesAndCapabilities(Builder,
                 "Decide which capability to call first, or reply directly if no action is needed.");
 
@@ -212,7 +200,7 @@ namespace AiAssistant.ExecuteUnit
         }
 
         /// <summary>
-        /// Builds a follow-up prompt after a capability has executed.
+        /// Builds a follow-up prompt after a capability has executed successfully.
         /// Feeds the result back to the AI, including the whole memory of previous steps.
         /// </summary>
         public string BuildResultPrompt(string UserInput, ExecutionResult Result)
@@ -228,7 +216,6 @@ namespace AiAssistant.ExecuteUnit
             Builder.AppendLine(UserInput?.Trim());
             Builder.AppendLine();
 
-            // Include the whole memory so AI never forgets previous steps
             Builder.AppendLine(FormatMemory());
             Builder.AppendLine();
 
@@ -258,6 +245,48 @@ namespace AiAssistant.ExecuteUnit
             return Builder.ToString();
         }
 
+        /// <summary>
+        /// Builds a retry prompt after a capability execution failed.
+        /// Feeds the error message and execution history back to the AI,
+        /// along with the full capability list so it can pick a different approach.
+        /// Memory is intentionally preserved so the AI knows what it already tried.
+        /// </summary>
+        public string BuildErrorRetryPrompt(string UserInput, ExecutionResult FailedResult)
+        {
+            var Builder = new StringBuilder();
+
+            AppendRulesAndCapabilities(Builder,
+                "The previous action FAILED with an error. " +
+                "Carefully read the error message and the step history below. " +
+                "Do NOT repeat the exact same action with the same parameters — that will fail again. " +
+                "Choose a different capability, fix the parameters, or switch to a CMD / C# approach. " +
+                "If you already used 5 or more steps, you MUST switch to a batch CMD or C# solution immediately. " +
+                "Set Continue = true if more steps are still needed after your fix.");
+
+            Builder.AppendLine("=== ORIGINAL USER REQUEST ===");
+            Builder.AppendLine(UserInput?.Trim());
+            Builder.AppendLine();
+
+            // Include full step history so AI knows what has already been attempted
+            Builder.AppendLine(FormatMemory());
+            Builder.AppendLine();
+
+            Builder.AppendLine("=== FAILED ACTION (just now) ===");
+            Builder.AppendLine($"Action : {FailedResult.Action}");
+            Builder.AppendLine($"Error  : {FailedResult.ErrorMessage}");
+
+            if (!string.IsNullOrWhiteSpace(FailedResult.RawResponse))
+            {
+                Builder.AppendLine($"Raw AI Response that caused the failure:");
+                Builder.AppendLine(FailedResult.RawResponse);
+            }
+
+            Builder.AppendLine();
+            Builder.AppendLine("Analyze the error, then respond with a corrected JSON action.");
+
+            return Builder.ToString();
+        }
+
         #endregion
 
         #region AI Response Parsing & Dispatch
@@ -265,6 +294,18 @@ namespace AiAssistant.ExecuteUnit
         /// <summary>
         /// Parses the AI's JSON response, dispatches the capability, records the step in AIMemory,
         /// and returns an ExecutionResult.
+        ///
+        /// Return value guide for callers:
+        ///   Status == "Reply"   → task done, show ReturnValue to user, no retry needed
+        ///   Status == "Success" → capability ran OK
+        ///                         Continue == true  → call BuildResultPrompt + this method again
+        ///                         Continue == false → task done
+        ///   Status == "Failure"
+        ///     Action == "ParseError" or "MissingAction"
+        ///                         → unrecoverable, memory already cleared, stop loop
+        ///     Action == "UnknownAction" or "ExecutionError"
+        ///                         → recoverable, memory preserved, Continue == true
+        ///                           call BuildErrorRetryPrompt + this method again
         /// </summary>
         public ExecutionResult AnalysisAndExecuteCapabilities(string AiJsonResponse)
         {
@@ -276,17 +317,15 @@ namespace AiAssistant.ExecuteUnit
             }
             catch (JsonException ParseException)
             {
-                var failResult = ExecutionResult.Failure(
+                var FailResult = ExecutionResult.Failure(
                     "ParseError",
                     $"AI response is not valid JSON: {ParseException.Message}",
                     AiJsonResponse,
-                    Continue: false
+                    Continue: false   // Cannot recover from malformed JSON
                 );
-                // Record the failed parse in memory
                 AddToMemory("ParseError", AiJsonResponse, ParseException.Message, "Failure", "Invalid JSON");
-                // Because Continue = false, we clear memory now (task cannot continue)
-                ClearMemory();
-                return failResult;
+                ClearMemory();        // Unrecoverable — start fresh next time
+                return FailResult;
             }
 
             // --- Step 2: Extract fields ---
@@ -294,7 +333,7 @@ namespace AiAssistant.ExecuteUnit
             string Reason = ParsedJson["Reason"]?.Value<string>() ?? "(no reason given)";
             bool Continue = ParsedJson["Continue"]?.Value<bool>() ?? false;
             JObject Params = ParsedJson["Params"] as JObject ?? new JObject();
-            string ParamsString = Params.ToString(Formatting.None); // for memory
+            string ParamsString = Params.ToString(Formatting.None);
 
             if (string.IsNullOrWhiteSpace(ActionName))
             {
@@ -302,7 +341,7 @@ namespace AiAssistant.ExecuteUnit
                     "MissingAction",
                     "The AI response JSON does not contain an 'Action' field.",
                     AiJsonResponse,
-                    Continue: false
+                    Continue: false   // Unrecoverable format error
                 );
                 AddToMemory("MissingAction", ParamsString, "No Action field", "Failure", Reason);
                 ClearMemory();
@@ -313,12 +352,10 @@ namespace AiAssistant.ExecuteUnit
             if (ActionName == "Reply")
             {
                 string ReplyText = Params["Message"]?.Value<string>() ?? "";
-                var replyResult = ExecutionResult.TextReply(ReplyText, Reason);
-                // Record the final reply in memory
+                var ReplyResult = ExecutionResult.TextReply(ReplyText, Reason);
                 AddToMemory("Reply", ParamsString, ReplyText, "Reply", Reason);
-                // Task ends -> clear memory as requested
-                ClearMemory();
-                return replyResult;
+                ClearMemory();   // Task complete
+                return ReplyResult;
             }
 
             // --- Step 4: Dispatch capability ---
@@ -329,38 +366,41 @@ namespace AiAssistant.ExecuteUnit
                     ? JsonConvert.SerializeObject(ResultValue, Formatting.Indented)
                     : "(void)";
 
-                // Successful execution
                 var SuccessResult = ExecutionResult.Success(ActionName, Reason, ResultValue, Continue);
                 AddToMemory(ActionName, ParamsString, ResultString, "Success", Reason);
 
-                // If the AI says "Continue = false", clear memory now (task completed)
                 if (!Continue)
-                    ClearMemory();
+                    ClearMemory();   // Task complete
 
                 return SuccessResult;
             }
             catch (NotSupportedException)
             {
+                // The AI named a capability that does not exist.
+                // Recoverable: keep memory and let the caller retry with BuildErrorRetryPrompt.
                 var FailResult = ExecutionResult.Failure(
                     "UnknownAction",
-                    $"No capability named '{ActionName}' is registered.",
+                    $"No capability named '{ActionName}' is registered. " +
+                    $"Please choose one of the listed AVAILABLE CAPABILITIES.",
                     AiJsonResponse,
-                    Continue: false
+                    Continue: true   // Caller should retry via BuildErrorRetryPrompt
                 );
                 AddToMemory(ActionName, ParamsString, "Unknown capability", "Failure", Reason);
-                ClearMemory();
+                // Do NOT clear memory — AI needs history to pick a valid alternative
                 return FailResult;
             }
             catch (Exception DispatchException)
             {
+                // The capability exists but threw at runtime (wrong params, IO error, etc.).
+                // Recoverable: keep memory and let the caller retry with BuildErrorRetryPrompt.
                 var FailResult = ExecutionResult.Failure(
                     "ExecutionError",
                     $"Capability '{ActionName}' threw an exception: {DispatchException.Message}",
                     AiJsonResponse,
-                    Continue: false
+                    Continue: true   // Caller should retry via BuildErrorRetryPrompt
                 );
                 AddToMemory(ActionName, ParamsString, DispatchException.Message, "Failure", Reason);
-                ClearMemory();
+                // Do NOT clear memory — AI needs history to avoid repeating the same mistake
                 return FailResult;
             }
         }
@@ -524,8 +564,30 @@ namespace AiAssistant.ExecuteUnit
 
         #endregion
     }
+
+    // -------------------------------------------------------------------------
+
     /// <summary>
     /// Describes the outcome of a single AI-driven capability execution.
+    ///
+    /// Caller loop guide:
+    ///
+    ///   result.Status == "Reply"
+    ///       → Show result.ReturnValue to the user. Loop ends.
+    ///
+    ///   result.Status == "Success"  &&  result.Continue == true
+    ///       → Call pipe.BuildResultPrompt(userInput, result) → AI → AnalysisAndExecuteCapabilities
+    ///
+    ///   result.Status == "Success"  &&  result.Continue == false
+    ///       → Loop ends (task done without an explicit Reply message).
+    ///
+    ///   result.Status == "Failure"  &&  result.Continue == true
+    ///     (Action == "UnknownAction" or "ExecutionError")
+    ///       → Call pipe.BuildErrorRetryPrompt(userInput, result) → AI → AnalysisAndExecuteCapabilities
+    ///
+    ///   result.Status == "Failure"  &&  result.Continue == false
+    ///     (Action == "ParseError" or "MissingAction")
+    ///       → Unrecoverable. Show result.ErrorMessage to the user. Loop ends.
     /// </summary>
     public class ExecutionResult
     {
@@ -539,9 +601,11 @@ namespace AiAssistant.ExecuteUnit
         public string Reason { get; set; }
 
         /// <summary>
-        /// Directly reflects the "Continue" field the AI returned in its JSON.
-        /// true  → call BuildResultPrompt + AnalysisAndExecuteCapabilities again.
-        /// false → task is done; if Status == "Reply", show ReturnValue to the user.
+        /// true  → caller must keep looping (another step is needed).
+        /// false → task is done; no further AI calls are required.
+        ///
+        /// For recoverable failures (UnknownAction, ExecutionError) this is set to true
+        /// so the caller knows to retry via BuildErrorRetryPrompt.
         /// </summary>
         public bool Continue { get; set; }
 
@@ -551,7 +615,7 @@ namespace AiAssistant.ExecuteUnit
         /// <summary>Error description when Status == "Failure".</summary>
         public string ErrorMessage { get; set; }
 
-        /// <summary>Raw AI response string, kept for diagnostics.</summary>
+        /// <summary>Raw AI response string, kept for diagnostics / retry prompts.</summary>
         public string RawResponse { get; set; }
 
         // ---- Factory methods ----

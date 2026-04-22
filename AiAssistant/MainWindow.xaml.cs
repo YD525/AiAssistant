@@ -4,6 +4,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Shapes;
+using System.Windows.Threading;
 using AiAssistant.AI;
 using AiAssistant.ConvertManagement;
 using AiAssistant.ExecuteSandbox;
@@ -40,31 +41,30 @@ namespace AiAssistant
                     {
                         ExecuteBtn.Content = "Executing";
                     }));
-
                     try
                     {
                         ClearLog();
                         string UserInput = Input;
                         string Prompt = Pipe.BuildUserPrompt(UserInput);
-
                         SetLog("Prompt", Prompt);
+
+                        int RetryCount = 0;
+                        const int MaxRetry = 3;
+
                         do
                         {
                             string AiReply = "";
-
                             if (AICenter.Gemini != null)
                             {
                                 AiReply = AICenter.Gemini.QueryAI(Prompt);
                                 SetLog("Gemini", AiReply);
                             }
-                            else
-                            if (AICenter.ChatGpt != null)
+                            else if (AICenter.ChatGpt != null)
                             {
                                 AiReply = AICenter.ChatGpt.QueryAI(Prompt);
                                 SetLog("ChatGpt", AiReply);
                             }
-                            else
-                            if (AICenter.LocalAI != null)
+                            else if (AICenter.LocalAI != null)
                             {
                                 AiReply = AICenter.LocalAI.QueryAI(Prompt);
                                 SetLog("LocalAI", AiReply);
@@ -77,22 +77,40 @@ namespace AiAssistant
                             }
 
                             ExecutionResult Result = Pipe.AnalysisAndExecuteCapabilities(AiReply);
-
-                            SetLog("ExecutionResult",JsonConvert.SerializeObject(Result));
+                            SetLog("ExecutionResult", JsonConvert.SerializeObject(Result));
 
                             if (!Result.Continue)
                             {
                                 SetLog("Complete", ConvertHelper.ObjToStr(Result.ReturnValue));
+                                MessageBox.Show(ConvertHelper.ObjToStr(Result.ReturnValue));
                                 break;
                             }
 
-                            Prompt = Pipe.BuildResultPrompt(UserInput, Result);
+                            if (Result.Status == "Failure")
+                            {
+                                RetryCount++;
+                                SetLog("RetryCount", $"{RetryCount} / {MaxRetry}");
 
-                            SetLog("RePrompt", Prompt);
+                                if (RetryCount >= MaxRetry)
+                                {
+                                    SetLog("RetryExceeded", $"Reached max retries ({MaxRetry}), task aborted.");
+                                    MessageBox.Show($"Task failed after {MaxRetry} retries.\n\nLast error: {Result.ErrorMessage}");
+                                    break;
+                                }
+
+                                Prompt = Pipe.BuildErrorRetryPrompt(UserInput, Result);
+                                SetLog("ErrorRetryPrompt", Prompt);
+                            }
+                            else
+                            {
+                                RetryCount = 0;
+                                Prompt = Pipe.BuildResultPrompt(UserInput, Result);
+                                SetLog("RePrompt", Prompt);
+                            }
+
                         } while (true);
-
                     }
-                    catch(Exception Ex) 
+                    catch (Exception Ex)
                     {
                         MessageBox.Show(Ex.Message);
                     }
@@ -101,10 +119,8 @@ namespace AiAssistant
                     {
                         ExecuteBtn.Content = "Execute";
                     }));
-
                     ExecuteTrd = null;
                 });
-
                 ExecuteTrd.Start();
             }
         }
@@ -124,7 +140,7 @@ namespace AiAssistant
         {
             Log.Dispatcher.Invoke(new Action(() => {
                 Log.Text += StepName + "->\r\n" + OneLog + "\r\n" + "\r\n";
-                Log.ScrollToEnd();
+                Dispatcher.CurrentDispatcher.BeginInvoke(new Action(() => Log.ScrollToEnd()), DispatcherPriority.Loaded);
             }));
         }
 
