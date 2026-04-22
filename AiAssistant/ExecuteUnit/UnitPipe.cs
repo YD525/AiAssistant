@@ -102,29 +102,38 @@ namespace AiAssistant.ExecuteUnit
             Builder.AppendLine();
 
             Builder.AppendLine("=== EFFICIENCY RULES ===");
-            Builder.AppendLine("1. If completing the user request would require MORE THAN 5 STEPS using simple capabilities (e.g., GetFiles, DeleteToRecycleBin, Copy, Move, Click, etc.), you MUST instead use a batch capability:");
+            Builder.AppendLine("1. If completing the user request would require MORE THAN 5 STEPS using simple capabilities (e.g., GetFiles, DeleteToRecycleBin, Copy, Move, Click, etc.), you MUST instead use a batch capability.");
             Builder.AppendLine("2. Only use single-item capabilities when the task involves exactly one item or when a batch command is impossible (e.g., conditional logic per file).");
             Builder.AppendLine("3. Always prefer completing the entire task in 1–3 steps over many small steps.");
-            Builder.AppendLine("4. If you already executed 5 or more steps and the task is not finished, stop and switch to a CMD or C# approach in the next step.");
+            Builder.AppendLine("4. If you already executed 5 or more steps and the task is not finished, stop and switch to a CMD or C# approach immediately.");
             Builder.AppendLine();
 
             Builder.AppendLine("=== RESPONSE FORMAT ===");
             Builder.AppendLine("{");
-            Builder.AppendLine("  \"Action\"   : \"<CapabilityName or Reply>\",");
-            Builder.AppendLine("  \"Params\"   : { \"<ParamName>\": <value> },");
-            Builder.AppendLine("  \"Reason\"   : \"<one sentence: why you chose this action>\",");
-            Builder.AppendLine("  \"Continue\" : <true | false>");
+            Builder.AppendLine("  \"Action\"       : \"<CapabilityName>\",");
+            Builder.AppendLine("  \"HasMoreSteps\" : <true | false>,");
+            Builder.AppendLine("  \"Params\"       : { \"<ParamName>\": <value> },");
+            Builder.AppendLine("  \"Reason\"       : \"<one sentence: why you chose this action>\"");
             Builder.AppendLine("}");
             Builder.AppendLine();
-            Builder.AppendLine("Continue field rules:");
-            Builder.AppendLine("  true  — you need to execute another capability after this one.");
-            Builder.AppendLine("  false — the task is fully complete; use Action = \"Reply\" to tell the user.");
+
+            Builder.AppendLine("=== STEP CONTROL RULES ===");
+            Builder.AppendLine("HasMoreSteps indicates whether the task requires additional execution steps.");
             Builder.AppendLine();
+            Builder.AppendLine("  true  — the task is NOT finished and more capabilities must be executed.");
+            Builder.AppendLine("  false — the task is fully completed in this step.");
+            Builder.AppendLine();
+            Builder.AppendLine("STRICT RULES:");
+            Builder.AppendLine("1. If the task is not fully completed, you MUST set HasMoreSteps = true.");
+            Builder.AppendLine("2. If the task is fully completed in this step, you MUST set HasMoreSteps = false.");
+            Builder.AppendLine("3. NEVER invert this logic.");
+            Builder.AppendLine();
+
             Builder.AppendLine(ContextInstruction);
-            Builder.AppendLine();
             Builder.AppendLine();
 
             Builder.AppendLine("=== AVAILABLE CAPABILITIES ===");
+
             foreach (CapabilityInfo Capability in GetCapabilities())
             {
                 Builder.AppendLine($"[{Capability.Name}]");
@@ -143,6 +152,11 @@ namespace AiAssistant.ExecuteUnit
 
                 Builder.AppendLine();
             }
+
+            Builder.AppendLine("=== CRITICAL RULES ===");
+            Builder.AppendLine("1. Action MUST ALWAYS be one of the AVAILABLE CAPABILITIES.");
+            Builder.AppendLine("2. All outputs must be produced through capability execution results.");
+            Builder.AppendLine("3. The model must always select an Action before responding.");
         }
 
         /// <summary>
@@ -155,7 +169,8 @@ namespace AiAssistant.ExecuteUnit
 
             var Builder = new StringBuilder();
             AppendRulesAndCapabilities(Builder,
-                "Decide which capability to call first, or reply directly if no action is needed.");
+                 "Select the first capability to execute based on the user request. " +
+                "You must always start by executing a capability.");
 
             Builder.AppendLine("=== USER REQUEST ===");
             Builder.AppendLine(UserInput?.Trim());
@@ -172,9 +187,9 @@ namespace AiAssistant.ExecuteUnit
             var Builder = new StringBuilder();
 
             AppendRulesAndCapabilities(Builder,
-                "Analyze the execution result below. Use the history to avoid repeating actions. " +
-                "If you already used 5 or more steps and the task is not complete, switch to a batch command or C# code immediately. " +
-                "Set Continue = true if more steps are needed, or Continue = false and Action = \"Reply\" when done.");
+                 "Analyze the execution result below. " +
+                 "Use the history to avoid repeating actions. " +
+                 "Decide whether further steps are required based ONLY on HasMoreSteps rules.");
 
             Builder.AppendLine("=== ORIGINAL USER REQUEST ===");
             Builder.AppendLine(UserInput?.Trim());
@@ -255,22 +270,7 @@ namespace AiAssistant.ExecuteUnit
 
         #region AI Response Parsing & Dispatch
 
-        /// <summary>
-        /// Parses the AI's JSON response, dispatches the capability, records the step in AIMemory,
-        /// and returns an ExecutionResult.
-        ///
-        /// Return value guide for callers:
-        ///   Status == "Reply"   → task done, show ReturnValue to user, no retry needed
-        ///   Status == "Success" → capability ran OK
-        ///                         Continue == true  → call BuildResultPrompt + this method again
-        ///                         Continue == false → task done
-        ///   Status == "Failure"
-        ///     Action == "ParseError" or "MissingAction"
-        ///                         → unrecoverable, memory already cleared, stop loop
-        ///     Action == "UnknownAction" or "ExecutionError"
-        ///                         → recoverable, memory preserved, Continue == true
-        ///                           call BuildErrorRetryPrompt + this method again
-        /// </summary>
+        
         public ExecutionResult AnalysisAndExecuteCapabilities(string AiJsonResponse)
         {
             string GetJson = "";
@@ -301,6 +301,7 @@ namespace AiAssistant.ExecuteUnit
 
             // --- Step 2: Extract fields ---
             string ActionName = ParsedJson["Action"]?.Value<string>();
+            bool HasMoreSteps = ParsedJson["HasMoreSteps"]?.Value<bool>() ?? false; 
             string Reason = ParsedJson["Reason"]?.Value<string>() ?? "(no reason given)";
             bool Continue = ParsedJson["Continue"]?.Value<bool>() ?? false;
             JObject Params = ParsedJson["Params"] as JObject ?? new JObject();
@@ -320,10 +321,10 @@ namespace AiAssistant.ExecuteUnit
             }
 
             // --- Step 3: Text-only reply — task is done ---
-            if (ActionName == "Reply")
+            if (HasMoreSteps)
             {
                 string ReplyText = Params["Message"]?.Value<string>() ?? "";
-                var ReplyResult = ExecutionResult.TextReply(ReplyText, Reason);
+                var ReplyResult = ExecutionResult.TextReply(ActionName,ReplyText, Reason);
                 AddToMemory("Reply", ParamsString, ReplyText, "Reply", Reason);
                 ClearMemory();   // Task complete
                 return ReplyResult;
@@ -530,36 +531,11 @@ namespace AiAssistant.ExecuteUnit
         #endregion
     }
 
-    // -------------------------------------------------------------------------
-
-    /// <summary>
-    /// Describes the outcome of a single AI-driven capability execution.
-    ///
-    /// Caller loop guide:
-    ///
-    ///   result.Status == "Reply"
-    ///       → Show result.ReturnValue to the user. Loop ends.
-    ///
-    ///   result.Status == "Success"  &&  result.Continue == true
-    ///       → Call pipe.BuildResultPrompt(userInput, result) → AI → AnalysisAndExecuteCapabilities
-    ///
-    ///   result.Status == "Success"  &&  result.Continue == false
-    ///       → Loop ends (task done without an explicit Reply message).
-    ///
-    ///   result.Status == "Failure"  &&  result.Continue == true
-    ///     (Action == "UnknownAction" or "ExecutionError")
-    ///       → Call pipe.BuildErrorRetryPrompt(userInput, result) → AI → AnalysisAndExecuteCapabilities
-    ///
-    ///   result.Status == "Failure"  &&  result.Continue == false
-    ///     (Action == "ParseError" or "MissingAction")
-    ///       → Unrecoverable. Show result.ErrorMessage to the user. Loop ends.
-    /// </summary>
+   
     public class ExecutionResult
     {
-        /// <summary>"Success" | "Failure" | "Reply"</summary>
         public string Status { get; set; }
 
-        /// <summary>The capability name that was executed, or "Reply" / error code.</summary>
         public string Action { get; set; }
 
         /// <summary>The AI's stated reason for choosing this action.</summary>
@@ -606,11 +582,11 @@ namespace AiAssistant.ExecuteUnit
             };
 
         /// <summary>Always sets Continue = false because a Reply means the task is done.</summary>
-        public static ExecutionResult TextReply(string Message, string Reason)
+        public static ExecutionResult TextReply(string Action,string Message, string Reason)
             => new ExecutionResult
             {
-                Status = "Reply",
-                Action = "Reply",
+                Status = "HasMoreSteps",
+                Action = Action,
                 Reason = Reason,
                 ReturnValue = Message,
                 Continue = false
