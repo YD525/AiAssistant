@@ -66,76 +66,74 @@ namespace AiAssistant.ExecuteUnit
 
         /// <summary>Starts the cmd.exe process if it is not already running.</summary>
         public void Start()
-            => Sandbox.Exec(nameof(Start), () =>
+        {
+            // Fast path: already running
+            if (CmdProcess != null && !CmdProcess.HasExited)
+                return;
+
+            lock (StartLock)
             {
-                // Fast path: already running
                 if (CmdProcess != null && !CmdProcess.HasExited)
                     return;
 
-                lock (StartLock)
+                IsStopping = false;
+
+                CmdProcess = new Process();
+                CmdProcess.StartInfo.FileName = "cmd.exe";
+                CmdProcess.StartInfo.UseShellExecute = false;
+                CmdProcess.StartInfo.RedirectStandardInput = true;
+                CmdProcess.StartInfo.RedirectStandardOutput = true;
+                CmdProcess.StartInfo.RedirectStandardError = true;
+                CmdProcess.StartInfo.CreateNoWindow = true;
+                CmdProcess.StartInfo.StandardOutputEncoding = Encoding.UTF8;
+                CmdProcess.StartInfo.StandardErrorEncoding = Encoding.UTF8;
+
+                CmdProcess.OutputDataReceived += (Sender, EventArgs) =>
                 {
-                    if (CmdProcess != null && !CmdProcess.HasExited)
-                        return;
+                    if (IsStopping || EventArgs.Data == null) return;
+                    SafeInvokeOutput(EventArgs.Data);
+                };
 
-                    IsStopping = false;
+                CmdProcess.ErrorDataReceived += (Sender, EventArgs) =>
+                {
+                    if (IsStopping || EventArgs.Data == null) return;
+                    SafeInvokeOutput("[ERR] " + EventArgs.Data);
+                };
 
-                    CmdProcess = new Process();
-                    CmdProcess.StartInfo.FileName               = "cmd.exe";
-                    CmdProcess.StartInfo.UseShellExecute        = false;
-                    CmdProcess.StartInfo.RedirectStandardInput  = true;
-                    CmdProcess.StartInfo.RedirectStandardOutput = true;
-                    CmdProcess.StartInfo.RedirectStandardError  = true;
-                    CmdProcess.StartInfo.CreateNoWindow         = true;
-                    CmdProcess.StartInfo.StandardOutputEncoding = Encoding.UTF8;
-                    CmdProcess.StartInfo.StandardErrorEncoding  = Encoding.UTF8;
+                CmdProcess.Start();
+                CmdProcess.BeginOutputReadLine();
+                CmdProcess.BeginErrorReadLine();
 
-                    CmdProcess.OutputDataReceived += (Sender, EventArgs) =>
-                    {
-                        if (IsStopping || EventArgs.Data == null) return;
-                        SafeInvokeOutput(EventArgs.Data);
-                    };
+                LastActiveTime = DateTime.Now;
 
-                    CmdProcess.ErrorDataReceived += (Sender, EventArgs) =>
-                    {
-                        if (IsStopping || EventArgs.Data == null) return;
-                        SafeInvokeOutput("[ERR] " + EventArgs.Data);
-                    };
-
-                    CmdProcess.Start();
-                    CmdProcess.BeginOutputReadLine();
-                    CmdProcess.BeginErrorReadLine();
-
-                    LastActiveTime = DateTime.Now;
-
-                    IdleTimer?.Dispose();
-                    IdleTimer = new Timer(CheckIdle, null, 5000, 5000);
-                }
-            });
+                IdleTimer?.Dispose();
+                IdleTimer = new Timer(CheckIdle, null, 5000, 5000);
+            }
+        }
 
         /// <summary>Sends "exit" to cmd.exe and terminates the process gracefully.</summary>
         public void Stop()
-            => Sandbox.Exec(nameof(Stop), () =>
+        {
+            lock (StartLock)
             {
-                lock (StartLock)
+                IsStopping = true;
+
+                IdleTimer?.Dispose();
+                IdleTimer = null;
+
+                try
                 {
-                    IsStopping = true;
-
-                    IdleTimer?.Dispose();
-                    IdleTimer = null;
-
-                    try
+                    if (CmdProcess != null && !CmdProcess.HasExited)
                     {
-                        if (CmdProcess != null && !CmdProcess.HasExited)
-                        {
-                            try { CmdProcess.StandardInput.WriteLine("exit"); } catch { }
+                        try { CmdProcess.StandardInput.WriteLine("exit"); } catch { }
 
-                            CmdProcess.WaitForExit(2000);
-                            CmdProcess.Close();
-                        }
+                        CmdProcess.WaitForExit(2000);
+                        CmdProcess.Close();
                     }
-                    catch { }
                 }
-            });
+                catch { }
+            }
+        }
 
         /// <summary>Ensures the cmd.exe process is running, starting it if necessary.</summary>
         private void EnsureStarted()

@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using AiAssistant.ExecuteSandbox;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Scripting;
 using Microsoft.CodeAnalysis.Scripting;
 using static AiAssistant.ExecuteUnit.UnitHelper;
@@ -71,47 +73,66 @@ namespace AiAssistant.ExecuteUnit
         /// Returns a [ERROR] prefixed string if an exception is thrown.
         /// </summary>
         public object RunCode(string Code)
-            => Sandbox.Exec(nameof(RunCode), () =>
+    => Sandbox.Exec(nameof(RunCode), () =>
+    {
+        try
+        {
+            var References = AppDomain.CurrentDomain.GetAssemblies()
+                .Where(a => !a.IsDynamic && !string.IsNullOrEmpty(a.Location))
+                .Select(a => MetadataReference.CreateFromFile(a.Location))
+                .ToList();
+
+            var Imports = new[]
+            {
+                "System", "System.IO", "System.Linq", "System.Collections.Generic",
+                "System.Text", "System.Threading.Tasks", "System.Diagnostics"
+            };
+
+            var Options = ScriptOptions.Default
+                .WithImports(Imports)
+                .WithReferences(References);
+
+            var EvalTask = CSharpScript.EvaluateAsync<object>(Code, Options);
+            EvalTask.Wait();
+            return EvalTask.Result;
+        }
+        catch (Exception ex)
+        {
+            return $"[ERROR] {ex.Message}";
+        }
+    }, Code);
+
+        public object RunCodeWithReturn(string Code)
+        {
+            return Sandbox.Exec(nameof(RunCodeWithReturn), () =>
             {
                 try
                 {
-                    Task<object> EvalTask = CSharpScript.EvaluateAsync(Code);
-                    EvalTask.Wait();
-                    return EvalTask.Result;
+                    var References = AppDomain.CurrentDomain.GetAssemblies()
+                        .Where(a => !a.IsDynamic && !string.IsNullOrEmpty(a.Location))
+                        .Select(a => MetadataReference.CreateFromFile(a.Location))
+                        .ToList();
+
+                    var DefaultImports = new[]
+                    {
+                "System", "System.IO", "System.Linq", "System.Collections.Generic",
+                "System.Text", "System.Threading.Tasks", "System.Diagnostics"
+            };
+
+                    var Options = ScriptOptions.Default
+                        .WithImports(DefaultImports)
+                        .WithReferences(References);
+
+                    var Task = CSharpScript.EvaluateAsync<object>(Code, Options);
+                    Task.Wait();
+                    return Task.Result;
                 }
-                catch (Exception Exception)
+                catch (Exception ex)
                 {
-                    return $"[ERROR] {Exception.Message}";
+                    return $"[ERROR] {ex.Message}";
                 }
             }, Code);
-
-        public object RunCodeWithReturn(string Code)
-        => Sandbox.Exec(nameof(RunCodeWithReturn), () =>
-        {
-            try
-            {
-                string wrappedCode = $@"((Func<object>)(() => {{ {Code} }}))()";
-
-                // Add common usings and references (similar to RunCodeWithGlobals but without globals)
-                ScriptOptions options = ScriptOptions.Default
-                    .WithImports(
-                        "System",
-                        "System.IO",
-                        "System.Linq",
-                        "System.Collections.Generic",
-                        "System.Text",
-                        "System.Threading.Tasks"
-                    );
-
-                Task<object> evalTask = CSharpScript.EvaluateAsync(wrappedCode, options);
-                evalTask.Wait();
-                return evalTask.Result;
-            }
-            catch (Exception ex)
-            {
-                return $"[ERROR] {ex.Message}";
-            }
-        }, Code);
+        }
 
         /// <summary>
         /// Evaluates a C# expression or script asynchronously and returns its result.
@@ -137,27 +158,36 @@ namespace AiAssistant.ExecuteUnit
         /// Common namespaces (System, IO, Linq, Collections) are pre-imported.
         /// </summary>
         public object RunCodeWithGlobals(string Code, object Globals)
-            => Sandbox.Exec(nameof(RunCodeWithGlobals), () =>
-            {
-                try
-                {
-                    ScriptOptions Options = ScriptOptions.Default
-                        .WithImports(
-                            "System",
-                            "System.IO",
-                            "System.Linq",
-                            "System.Collections.Generic"
-                        );
+      => Sandbox.Exec(nameof(RunCodeWithGlobals), () =>
+      {
+          try
+          {
+              var References = AppDomain.CurrentDomain.GetAssemblies()
+                  .Where(a => !a.IsDynamic && !string.IsNullOrEmpty(a.Location))
+                  .Select(a => MetadataReference.CreateFromFile(a.Location))
+                  .ToList();
 
-                    Task<object> EvalTask = CSharpScript.EvaluateAsync(Code, Options, Globals);
-                    EvalTask.Wait();
-                    return EvalTask.Result;
-                }
-                catch (Exception Exception)
-                {
-                    return $"[ERROR] {Exception.Message}";
-                }
-            }, Code, Globals);
+              ScriptOptions Options = ScriptOptions.Default
+                  .WithImports(
+                      "System",
+                      "System.IO",
+                      "System.Linq",
+                      "System.Collections.Generic",
+                      "System.Text",
+                      "System.Threading.Tasks",
+                      "System.Diagnostics"   
+                  )
+                  .WithReferences(References);  
+
+              Task<object> EvalTask = CSharpScript.EvaluateAsync(Code, Options, Globals);
+              EvalTask.Wait();
+              return EvalTask.Result;
+          }
+          catch (Exception Exception)
+          {
+              return $"[ERROR] {Exception.Message}";
+          }
+      }, Code, Globals);
 
         #endregion
     }
