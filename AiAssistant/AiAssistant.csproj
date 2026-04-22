@@ -113,6 +113,9 @@
     <Compile Include="Platform\GeminiApi.cs" />
     <Compile Include="Platform\LMStudio.cs" />
     <Compile Include="Request\HttpHelper.cs" />
+    <Compile Include="SandBoxView.xaml.cs">
+      <DependentUpon>SandBoxView.xaml</DependentUpon>
+    </Compile>
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -128,6 +131,10 @@
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Page Include="SandBoxView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Memory\AIMemory.cs" />

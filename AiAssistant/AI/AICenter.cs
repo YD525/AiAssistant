@@ -2,6 +2,7 @@
 using System.Net.Configuration;
 using System.Text;
 using AiAssistant.FileManagement;
+using AiAssistant.Platform;
 using Newtonsoft.Json;
 
 namespace AiAssistant.AI
@@ -11,6 +12,9 @@ namespace AiAssistant.AI
         public bool EnableChatGpt { get; set; } = false;
         public bool EnableGemini { get; set; } = false;
         public bool EnableLMStudio { get; set; } = false;
+
+        public string ChatGptModel { get; set; } = "";
+        public string GeminiModel { get; set; } = "";
 
         public byte[] ChatGptKey { get; set; }
         public byte[] GeminiKey { get; set; }
@@ -67,6 +71,31 @@ namespace AiAssistant.AI
         private static byte[] XORDecrypt(byte[] data)
         {
             return XOREncrypt(data);
+        }
+
+        public static ChatGptApi ChatGpt = null;
+        public static GeminiApi Gemini = null;
+        public static LMStudio LocalAI = null;
+
+        public static void Init()
+        {
+            if (LocalSetting.EnableChatGpt && LocalSetting.GetChatGptKey().Length > 0)
+            {
+                ChatGpt = new ChatGptApi();
+                ChatGpt.Init(LocalSetting.ChatGptModel,LocalSetting.GetChatGptKey(),null);
+            }
+
+            if (LocalSetting.EnableGemini && LocalSetting.GetGeminiKey().Length > 0)
+            {
+                Gemini = new GeminiApi();
+                Gemini.Init(LocalSetting.GeminiModel, LocalSetting.GetGeminiKey(), null);
+            }
+
+            if (LocalSetting.EnableLMStudio)
+            {
+                LocalAI = new LMStudio();
+                LocalAI.Init(LocalAI.LocalPort);
+            }
         }
 
         public static void Load()
