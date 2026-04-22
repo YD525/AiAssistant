@@ -77,14 +77,20 @@ namespace AiAssistant.ExecuteUnit
         #region Capability Registry
 
         /// <summary>Returns the merged capability list from every registered Unit.</summary>
-        public static List<CapabilityInfo> GetCapabilities()
+        public List<CapabilityInfo> GetCapabilities()
         {
             var AllCapabilities = new List<CapabilityInfo>();
+            if(IoUnit.Enable)
             AllCapabilities.AddRange(IOUnit.CapabilityManifest);
+            if(CmdUnit.Enable)
             AllCapabilities.AddRange(CMDUnit.CapabilityManifest);
+            if(MouseUnit.Enable)
             AllCapabilities.AddRange(MouseUnit.CapabilityManifest);
+            if(RequestUnit.Enable)
             AllCapabilities.AddRange(RequestUnit.CapabilityManifest);
+            if(WinApiUnit.Enable)
             AllCapabilities.AddRange(WinApiUnit.CapabilityManifest);
+            if (CSharpUnit.Enable)
             AllCapabilities.AddRange(CSharpCodeUnit.CapabilityManifest);
             return AllCapabilities;
         }
@@ -97,7 +103,7 @@ namespace AiAssistant.ExecuteUnit
         /// Appends the shared role definition, JSON format rules (including the Continue field),
         /// efficiency rules, examples, and the full capability list into Builder.
         /// </summary>
-        private static void AppendRulesAndCapabilities(StringBuilder Builder, string ContextInstruction)
+        private void AppendRulesAndCapabilities(StringBuilder Builder, string ContextInstruction)
         {
             Builder.AppendLine("You are an AI assistant that controls a Windows PC on behalf of the user.");
             Builder.AppendLine("You must respond ONLY with a single JSON object — no explanation, no markdown, no extra text.");

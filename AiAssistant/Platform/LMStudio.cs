@@ -71,10 +71,13 @@ namespace AiAssistant.Platform
     public class LMStudio 
     {
         public int LocalPort { get; set; } = 0;
-        public int CustomID { get; set; } = 0;
-
 
         public static string CurrentModel = "";
+
+        public void Init(int LocalPort)
+        {
+            this.LocalPort = LocalPort;
+        }
         public void GetCurrentModel()
         {
             if (LMStudio.CurrentModel == "")

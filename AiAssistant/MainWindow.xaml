@@ -5,8 +5,76 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:AiAssistant"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
-    <Grid>
-        
+        Title="AiAssistant" Height="450" Width="800">
+    <Grid Background="#FF383737">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="5"/>
+            <RowDefinition Height="35"/>
+            <RowDefinition Height="1*"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel Orientation="Horizontal" Margin="5 0 5 0" Grid.Row="1">
+            <Border CornerRadius="9" Background="#FF525252" Cursor="Hand" Margin="5 0 0 0">
+                <StackPanel Orientation="Horizontal" Margin="10 0 10 0">
+                    <Ellipse Width="5" Height="5" Fill="Black">
+                    </Ellipse>
+                    <Label Foreground="White" VerticalAlignment="Center" HorizontalAlignment="Center">
+                        CMDUnit
+                    </Label>
+                </StackPanel>
+            </Border>
+
+            <Border CornerRadius="9" Background="#FF525252" Cursor="Hand" Margin="5 0 0 0">
+                <StackPanel Orientation="Horizontal" Margin="10 0 10 0">
+                    <Ellipse Width="5" Height="5" Fill="Black">
+                    </Ellipse>
+                    <Label Foreground="White" VerticalAlignment="Center" HorizontalAlignment="Center">
+                        CSharpCodeUnit
+                    </Label>
+                </StackPanel>
+            </Border>
+
+            <Border CornerRadius="9" Background="#FF525252" Cursor="Hand" Margin="5 0 0 0">
+                <StackPanel Orientation="Horizontal" Margin="10 0 10 0">
+                    <Ellipse Width="5" Height="5" Fill="Black">
+                    </Ellipse>
+                    <Label Foreground="White" VerticalAlignment="Center" HorizontalAlignment="Center">
+                        IOUnit
+                    </Label>
+                </StackPanel>
+            </Border>
+
+            <Border CornerRadius="9" Background="#FF525252" Cursor="Hand" Margin="5 0 0 0">
+                <StackPanel Orientation="Horizontal" Margin="10 0 10 0">
+                    <Ellipse Width="5" Height="5" Fill="Black">
+                    </Ellipse>
+                    <Label Foreground="White" VerticalAlignment="Center" HorizontalAlignment="Center">
+                        MouseUnit
+                    </Label>
+                </StackPanel>
+            </Border>
+
+            <Border CornerRadius="9" Background="#FF525252" Cursor="Hand" Margin="5 0 0 0">
+                <StackPanel Orientation="Horizontal" Margin="10 0 10 0">
+                    <Ellipse Width="5" Height="5" Fill="Black">
+                    </Ellipse>
+                    <Label Foreground="White" VerticalAlignment="Center" HorizontalAlignment="Center">
+                        RequestUnit
+                    </Label>
+                </StackPanel>
+            </Border>
+
+            <Border CornerRadius="9" Background="#FF525252" Cursor="Hand" Margin="5 0 0 0">
+                <StackPanel Orientation="Horizontal" Margin="10 0 10 0">
+                    <Ellipse Width="5" Height="5" Fill="Black">
+                    </Ellipse>
+                    <Label Foreground="White" VerticalAlignment="Center" HorizontalAlignment="Center">
+                        WinApiUnit
+                    </Label>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+       
+
     </Grid>
 </Window>

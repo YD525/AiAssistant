@@ -15,6 +15,7 @@ namespace AiAssistant.ExecuteUnit
     /// </summary>
     public class WinApiUnit
     {
+        public bool Enable = false;
         #region Data Models
 
         /// <summary>Holds basic information about a running process.</summary>

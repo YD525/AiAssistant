@@ -14,6 +14,7 @@ namespace AiAssistant.ExecuteUnit
     /// </summary>
     public class MouseUnit
     {
+        public bool Enable = false;
         #region Capability Manifest (AI readable)
 
         public static List<CapabilityInfo> CapabilityManifest = new List<CapabilityInfo>

@@ -15,7 +15,7 @@ namespace AiAssistant
         {
             InitializeComponent();
 
-            AIAssistance("Please check today's weather for me.");
+            //AIAssistance("Please check today's weather for me.");
         }
 
 

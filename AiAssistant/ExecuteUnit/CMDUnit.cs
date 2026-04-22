@@ -14,6 +14,7 @@ namespace AiAssistant.ExecuteUnit
     /// </summary>
     public class CMDUnit
     {
+        public bool Enable = false;
         #region State
 
         /// <summary>The underlying cmd.exe process instance.</summary>
