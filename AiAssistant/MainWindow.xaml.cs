@@ -24,8 +24,6 @@ namespace AiAssistant
         {
             InitializeComponent();
 
-            new CSharpCodeUnit().RunCodeWithReturn("using System;\r\nusing System.Diagnostics;\r\nvar sb = new System.Text.StringBuilder();\r\nsb.AppendLine(\"PID\\tProcess Name\");\r\nforeach(var p in Process.GetProcesses()){\r\n    sb.AppendLine($\"{p.Id}\\t{p.ProcessName}\");\r\n}\r\nreturn sb.ToString();");
-
             //AIAssistance("Please check today's weather for me.");
         }
 
