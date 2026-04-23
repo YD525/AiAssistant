@@ -76,7 +76,7 @@
                         Model
                     </Label>
                     <TextBox Width="150" VerticalContentAlignment="Center" Name="ClaudeModel" TextChanged="ClaudeModel_TextChanged">
-                        
+                        claude-sonnet-4-5-20250929
                     </TextBox>
 
                     <CheckBox Margin="5 0 0 0" VerticalAlignment="Center" Name="ClaudeCheck" Click="ClaudeCheck_Click">
