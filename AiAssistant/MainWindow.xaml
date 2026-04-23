@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:AiAssistant"
         mc:Ignorable="d"
         Title="AiAssistant" Height="750" Width="800" WindowStartupLocation="CenterScreen" Loaded="Window_Loaded" Closing="Window_Closing">
-    <Grid Background="#FF383737">
+    <Grid Background="#FF282828">
         <Grid.RowDefinitions>
             <RowDefinition Height="5"/>
             <RowDefinition Height="35"/>
