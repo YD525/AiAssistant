@@ -127,13 +127,16 @@ namespace AiAssistant.ExecuteUnit
             if (HasCSharp)
             {
                 Builder.AppendLine("## SCRIPT OUTPUT RULES");
-
-                Builder.AppendLine("- C# scripts MUST end with   return <expression>;   to produce a visible result.");
-                Builder.AppendLine("  BAD  → Console.WriteLine(result);   // output is invisible");
-                Builder.AppendLine("  GOOD → return result;                // result is captured and shown to the user");
-
-                Builder.AppendLine("- If the task does NOT need to return data to the user (e.g. writing a file, moving, deleting), use return null;.");
-
+                Builder.AppendLine("- You are executing C# scripts directly on the user's PC.");
+                Builder.AppendLine("- Use 'return <expression>;' to send results back to yourself and to the user.");
+                Builder.AppendLine("- You can chain multiple steps (HasMoreSteps = true) — each step's return value");
+                Builder.AppendLine("  is shown to you in the next turn, so you can use it to decide what to do next.");
+                Builder.AppendLine("- Example flow:");
+                Builder.AppendLine("    Step 1: return a list of files  →  you receive the list");
+                Builder.AppendLine("    Step 2: process the list and return the final result  →  user sees the answer");
+                Builder.AppendLine("  BAD  → Console.WriteLine(result);   // invisible, neither you nor the user can see it");
+                Builder.AppendLine("  GOOD → return result;                // captured and fed back to you and the user");
+                Builder.AppendLine("- If the task does NOT need to return data (e.g. writing a file, moving, deleting), use return null;");
                 Builder.AppendLine();
             }
 
