@@ -95,74 +95,81 @@ namespace AiAssistant.ExecuteUnit
         /// Appends the shared role definition, JSON format rules (including the Continue field),
         /// efficiency rules, examples, and the full capability list into Builder.
         /// </summary>
-        private void AppendRulesAndCapabilities(StringBuilder Builder, string ContextInstruction)
+        private void AppendRulesAndCapabilities(StringBuilder Builder, string contextInstruction)
         {
-            Builder.AppendLine("You are an AI assistant that controls a Windows PC on behalf of the user.");
-            Builder.AppendLine("You must respond ONLY with a single JSON object — no explanation, no markdown, no extra text.");
+            // ── 1. ROLE ──────────────────────────────────────────────────────────────
+            Builder.AppendLine("You are an AI assistant that controls a Windows PC for the user.");
+            Builder.AppendLine("Respond ONLY with one JSON object. No markdown, no explanation, no extra text.");
             Builder.AppendLine();
 
-            Builder.AppendLine("=== EFFICIENCY RULES ===");
-            Builder.AppendLine("1. If completing the user request would require MORE THAN 5 STEPS using simple capabilities (e.g., GetFiles, DeleteToRecycleBin, Copy, Move, Click, etc.), you MUST instead use a batch capability.");
-            Builder.AppendLine("2. Only use single-item capabilities when the task involves exactly one item or when a batch command is impossible (e.g., conditional logic per file).");
-            Builder.AppendLine("3. Always prefer completing the entire task in 1–3 steps over many small steps.");
-            Builder.AppendLine("4. If you already executed 5 or more steps and the task is not finished, stop and switch to a CMD or C# approach immediately.");
-            Builder.AppendLine();
-
-            Builder.AppendLine("=== RESPONSE FORMAT ===");
+            // ── 2. RESPONSE FORMAT ───────────────────────────────────────────────────
+            Builder.AppendLine("## RESPONSE FORMAT");
             Builder.AppendLine("{");
-            Builder.AppendLine("  \"Action\"       : \"<CapabilityName>\",");
-            Builder.AppendLine("  \"HasMoreSteps\" : <true | false>,");
-            Builder.AppendLine("  \"Params\"       : { \"<ParamName>\": <value> },");
-            Builder.AppendLine("  \"Reason\"       : \"<one sentence: why you chose this action>\"");
+            Builder.AppendLine("  \"Action\"      : \"<CapabilityName>\",");
+            Builder.AppendLine("  \"HasMoreSteps\": <true|false>,");
+            Builder.AppendLine("  \"Params\"      : { \"<ParamName>\": <value>, ... },");
+            Builder.AppendLine("  \"Reason\"      : \"<one sentence: why you chose this action>\"");
             Builder.AppendLine("}");
             Builder.AppendLine();
 
-            Builder.AppendLine("=== STEP CONTROL RULES ===");
-            Builder.AppendLine("HasMoreSteps indicates whether the task requires additional execution steps.");
-            Builder.AppendLine();
-            Builder.AppendLine("  true  — the task is NOT finished and more capabilities must be executed.");
-            Builder.AppendLine("  false — the task is fully completed in this step.");
-            Builder.AppendLine();
-            Builder.AppendLine("STRICT RULES:");
-            Builder.AppendLine("1. If the task is not fully completed, you MUST set HasMoreSteps = true.");
-            Builder.AppendLine("2. If the task is fully completed in this step, you MUST set HasMoreSteps = false.");
-            Builder.AppendLine("3. NEVER invert this logic.");
+            // ── 3. THIS TURN ─────────────────────────────────────────────────────────
+            Builder.AppendLine("## THIS TURN");
+            Builder.AppendLine(contextInstruction?.Trim());
             Builder.AppendLine();
 
-            Builder.AppendLine(ContextInstruction);
+            // ── 4. HasMoreSteps RULES ─────────────────────────────────────────────────
+            Builder.AppendLine("## HasMoreSteps RULES");
+            Builder.AppendLine("  true  → task is NOT finished; more steps will be executed.");
+            Builder.AppendLine("  false → task is FULLY completed by this step.");
+            Builder.AppendLine("Never invert this logic.");
             Builder.AppendLine();
 
-            Builder.AppendLine("=== AVAILABLE CAPABILITIES ===");
+            // ── 5. EFFICIENCY RULES ───────────────────────────────────────────────────
+            Builder.AppendLine("## EFFICIENCY RULES");
+            Builder.AppendLine("- Complete the task in 1–3 steps whenever possible.");
+            Builder.AppendLine("- Use batch capabilities (CMD / C#) when > 5 simple steps would be needed.");
+            Builder.AppendLine("- After 5 executed steps without completing the task, switch to CMD or C# immediately.");
+            Builder.AppendLine();
 
-            foreach (CapabilityInfo Capability in GetCapabilities())
+            // ── 6. SCRIPT OUTPUT RULES ────────────────────────────────────────────────
+            Builder.AppendLine("## SCRIPT OUTPUT RULES  (applies to RunCSharpCode and ExecuteAndGetOutput)");
+            Builder.AppendLine("- C# scripts MUST end with   return <expression>;   to produce a visible result.");
+            Builder.AppendLine("  BAD  → Console.WriteLine(result);   // output is invisible");
+            Builder.AppendLine("  GOOD → return result;                // result is captured and shown to the user");
+            Builder.AppendLine("- CMD commands MUST print the final answer to stdout (e.g. echo, type, dir).");
+            Builder.AppendLine("- If the task only produces side-effects (file write, move, delete), return null is fine.");
+            Builder.AppendLine();
+
+            // ── 7. C# SCRIPT STYLE ────────────────────────────────────────────────────
+            Builder.AppendLine("## C# SCRIPT STYLE");
+            Builder.AppendLine("- Top-level statements only (no class, no Main method).");
+            Builder.AppendLine("- Pre-imported: System, System.IO, System.Linq, System.Collections.Generic,");
+            Builder.AppendLine("  System.Text, System.Threading.Tasks, System.Diagnostics.");
+            Builder.AppendLine("- Do NOT add using directives for these namespaces.");
+            Builder.AppendLine();
+
+            // ── 8. AVAILABLE CAPABILITIES ─────────────────────────────────────────────
+            Builder.AppendLine("## AVAILABLE CAPABILITIES");
+            foreach (var Cap in GetCapabilities())
             {
-                Builder.AppendLine($"[{Capability.Name}]");
-                Builder.AppendLine($"  Description : {Capability.Description}");
-
-                if (Capability.Params != null && Capability.Params.Count > 0)
+                Builder.AppendLine($"### {Cap.Name}");
+                Builder.AppendLine($"  {Cap.Description}");
+                if (Cap.Params != null && Cap.Params.Count > 0)
                 {
-                    Builder.AppendLine("  Parameters  :");
-                    foreach (UnitHelper.ParameterInfo Param in Capability.Params)
-                        Builder.AppendLine($"    - {Param.Name} ({Param.Type}): {Param.Description}");
+                    foreach (var Param in Cap.Params)
+                        Builder.AppendLine($"  - {Param.Name} ({Param.Type}): {Param.Description}");
                 }
                 else
                 {
-                    Builder.AppendLine("  Parameters  : none");
+                    Builder.AppendLine("  (no parameters)");
                 }
-
                 Builder.AppendLine();
             }
 
-            Builder.AppendLine("=== CRITICAL RULES ===");
-            Builder.AppendLine("1. Action MUST ALWAYS be one of the AVAILABLE CAPABILITIES.");
-            Builder.AppendLine("2. All outputs must be produced through capability execution results.");
-            Builder.AppendLine("3. The model must always select an Action before responding.");
-            Builder.AppendLine();
-            Builder.AppendLine("=== CSHARP SCRIPT DEV RULES ===");
-            Builder.AppendLine("1.You are writing C# SCRIPT code, NOT a Console Application.");
-            Builder.AppendLine("2. DO NOT create any class.");
-            Builder.AppendLine("3. DO NOT create Main method.");
-            Builder.AppendLine("4. Code runs in a single script file (top-level C# statements).");
+            // ── 9. CRITICAL CONSTRAINTS ───────────────────────────────────────────────
+            Builder.AppendLine("## CRITICAL CONSTRAINTS");
+            Builder.AppendLine("- Action MUST be one of the names listed under AVAILABLE CAPABILITIES.");
+            Builder.AppendLine("- Never produce output through Console.Write / print / log — only via return values.");
             Builder.AppendLine();
         }
 
@@ -173,17 +180,14 @@ namespace AiAssistant.ExecuteUnit
         public string BuildUserPrompt(string UserInput)
         {
             ClearMemory();
-
             var Builder = new StringBuilder();
             AppendRulesAndCapabilities(Builder,
-                 "Select the first capability to execute based on the user request. " +
-                "You must always start by executing a capability.");
-
-            Builder.AppendLine("=== USER REQUEST ===");
+                "Select the first capability to execute. Always begin by executing a capability.");
+            Builder.AppendLine("## USER REQUEST");
             Builder.AppendLine(UserInput?.Trim());
-
             return Builder.ToString();
         }
+
 
         /// <summary>
         /// Builds a follow-up prompt after a capability has executed successfully.
@@ -192,20 +196,19 @@ namespace AiAssistant.ExecuteUnit
         public string BuildResultPrompt(string UserInput, ExecutionResult Result)
         {
             var Builder = new StringBuilder();
-
             AppendRulesAndCapabilities(Builder,
-                 "Analyze the execution result below. " +
-                 "Use the history to avoid repeating actions. " +
-                 "Decide whether further steps are required based ONLY on HasMoreSteps rules.");
+                "A capability just executed successfully. " +
+                "Review the result and the step history, then decide whether the task is complete " +
+                "(HasMoreSteps = false) or another step is required (HasMoreSteps = true).");
 
-            Builder.AppendLine("=== ORIGINAL USER REQUEST ===");
+            Builder.AppendLine("## USER REQUEST");
             Builder.AppendLine(UserInput?.Trim());
             Builder.AppendLine();
 
             Builder.AppendLine(FormatMemory());
             Builder.AppendLine();
 
-            Builder.AppendLine("=== MOST RECENT EXECUTION RESULT ===");
+            Builder.AppendLine("## LAST EXECUTION RESULT");
             Builder.AppendLine($"Action : {Result.Action}");
             Builder.AppendLine($"Status : {Result.Status}");
             Builder.AppendLine($"Reason : {Result.Reason}");
@@ -216,16 +219,15 @@ namespace AiAssistant.ExecuteUnit
             }
             else if (Result.ReturnValue != null)
             {
-                string ReturnText = Result.ReturnValue is string StringValue
-                    ? StringValue
+                string Return = Result.ReturnValue is string Str
+                    ? Str
                     : JsonConvert.SerializeObject(Result.ReturnValue, Formatting.Indented);
-
                 Builder.AppendLine("Output :");
-                Builder.AppendLine(ReturnText);
+                Builder.AppendLine(Return);
             }
             else
             {
-                Builder.AppendLine("Output : (none)");
+                Builder.AppendLine("Output : (none — void operation)");
             }
 
             return Builder.ToString();
@@ -240,44 +242,47 @@ namespace AiAssistant.ExecuteUnit
         public string BuildErrorRetryPrompt(string UserInput, ExecutionResult FailedResult)
         {
             var Builder = new StringBuilder();
-
             AppendRulesAndCapabilities(Builder,
-                "The previous action FAILED with an error. " +
-                "Carefully read the error message and the step history below. " +
-                "Do NOT repeat the exact same action with the same parameters — that will fail again. " +
-                "Choose a different capability, fix the parameters, or switch to a CMD / C# approach. " +
-                "If you already used 5 or more steps, you MUST switch to a batch CMD or C# solution immediately. " +
-                "Set Continue = true if more steps are still needed after your fix.");
+                "The previous action FAILED. " +
+                "Read the error details carefully and choose a corrected approach. " +
+                "Do NOT repeat the exact same Action + Params — that will fail again. " +
+                "If you have already executed 5+ steps, switch to CMD or RunCSharpCode immediately.");
 
-            Builder.AppendLine("=== ORIGINAL USER REQUEST ===");
+            Builder.AppendLine("## USER REQUEST");
             Builder.AppendLine(UserInput?.Trim());
             Builder.AppendLine();
 
-            // Include full step history so AI knows what has already been attempted
             Builder.AppendLine(FormatMemory());
             Builder.AppendLine();
 
-            Builder.AppendLine("=== FAILED ACTION (just now) ===");
-            Builder.AppendLine($"Action : {FailedResult.Action}");
-            Builder.AppendLine($"Error  : {FailedResult.ErrorMessage}");
+            // ── Full error block ──────────────────────────────────────────────────────
+            Builder.AppendLine("## FAILED ACTION — FULL ERROR DETAILS");
+            Builder.AppendLine($"Action       : {FailedResult.Action}");
+            Builder.AppendLine($"Error type   : {FailedResult.Status}");
+            Builder.AppendLine($"Error message: {FailedResult.ErrorMessage}");
 
             if (!string.IsNullOrWhiteSpace(FailedResult.RawResponse))
             {
-                Builder.AppendLine($"Raw AI Response that caused the failure:");
+                Builder.AppendLine();
+                Builder.AppendLine("Raw JSON you sent that caused the failure:");
                 Builder.AppendLine(FailedResult.RawResponse);
             }
 
             Builder.AppendLine();
-            Builder.AppendLine("Analyze the error, then respond with a corrected JSON action.");
+            Builder.AppendLine("## INSTRUCTIONS");
+            Builder.AppendLine("1. Identify the root cause from the error message above.");
+            Builder.AppendLine("2. Pick a different Action, fix the parameters, or rewrite the script.");
+            Builder.AppendLine("3. If the error is a C# compile/runtime error, fix the code and use RunCSharpCode.");
+            Builder.AppendLine("4. If the error is a CMD error, fix the command or switch to RunCSharpCode.");
+            Builder.AppendLine("5. Respond with a corrected JSON action.");
 
             return Builder.ToString();
         }
-
         #endregion
 
         #region AI Response Parsing & Dispatch
 
-        
+
         public ExecutionResult AnalysisAndExecuteCapabilities(string AiJsonResponse)
         {
             string GetJson = "";
@@ -341,9 +346,13 @@ namespace AiAssistant.ExecuteUnit
             try
             {
                 object ResultValue = Dispatch(ActionName, Params);
-                string ResultString = ResultValue != null
-                    ? JsonConvert.SerializeObject(ResultValue, Formatting.Indented)
-                    : "(void)";
+                string ResultString;
+                if (ResultValue == null)
+                    ResultString = "(void)";
+                else if (ResultValue is string s)
+                    ResultString = s;
+                else
+                    ResultString = JsonConvert.SerializeObject(ResultValue, Formatting.Indented);
 
                 var SuccessResult = ExecutionResult.Success(ActionName, Reason, ResultValue, Continue);
                 AddToMemory(ActionName, ParamsString, ResultString, "Success", Reason);

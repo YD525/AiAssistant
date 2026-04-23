@@ -118,7 +118,7 @@ namespace AiAssistant
                                     break;
                                 }
 
-                                Prompt = Pipe.BuildErrorRetryPrompt(UserInput + "\n[ScriptException]" + Result.ErrorMessage, Result);
+                                Prompt = Pipe.BuildErrorRetryPrompt(UserInput + "\n[ScriptException]", Result);
                                 SetLog("ErrorRetryPrompt", Prompt);
                             }
                             else

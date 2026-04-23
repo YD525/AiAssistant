@@ -90,17 +90,23 @@ namespace AiAssistant.ExecuteUnit
                         .WithImports(DefaultImports)
                         .WithReferences(References);
 
+                    string WrappedCode = $"new Func<object>(() => {{ {Code} }})()";
 
-                    var Script = CSharpScript.Create(Code, Options);
+                    var Script = CSharpScript.Create<object>(WrappedCode, Options);
                     var ScriptTask = Script.RunAsync();
                     ScriptTask.Wait();
 
                     if (ScriptTask.Exception != null)
-                    {
                         throw new Exception($"[ERROR] {JsonConvert.SerializeObject(ScriptTask.Exception, Formatting.Indented)}");
-                    }
 
-                    return JsonConvert.SerializeObject(ScriptTask.Result.ReturnValue, Formatting.Indented);
+                    var ReturnValue = ScriptTask.Result.ReturnValue;
+
+                    if (ReturnValue == null)
+                        return null;
+                    else if (ReturnValue is string s)
+                        return s;
+                    else
+                        return JsonConvert.SerializeObject(ReturnValue, Formatting.Indented);
                 }
                 catch (AggregateException aggEx)
                 {
@@ -112,7 +118,6 @@ namespace AiAssistant.ExecuteUnit
                 }
             }, Code);
         }
-
         #endregion
     }
 
