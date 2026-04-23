@@ -156,7 +156,8 @@ namespace AiAssistant.ExecuteUnit
                     Builder.AppendLine("- C# scripts MUST end with   return <expression>;   to produce a visible result.");
                     Builder.AppendLine("  BAD  → Console.WriteLine(result);   // output is invisible");
                     Builder.AppendLine("  GOOD → return result;                // result is captured and shown to the user");
-                    Builder.AppendLine("- If the task only produces side-effects (file write, move, delete), return null is fine.");
+
+                    Builder.AppendLine("- If the task does NOT need to return data to the user (e.g. writing a file, moving, deleting), use return null;.");
                 }
                 else if (HasCmd)
                 {
@@ -172,8 +173,6 @@ namespace AiAssistant.ExecuteUnit
                 Builder.AppendLine("## C# SCRIPT STYLE");
                 Builder.AppendLine("- Top-level statements only (no class, no Main method).");
                 Builder.AppendLine("- Pre-imported: System, System.IO, System.Linq, System.Collections.Generic,");
-                Builder.AppendLine("  System.Text, System.Threading.Tasks, System.Diagnostics.");
-                Builder.AppendLine("- Do NOT add using directives for these namespaces.");
             }
 
             Builder.AppendLine();
