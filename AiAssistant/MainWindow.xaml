@@ -14,15 +14,6 @@
         </Grid.RowDefinitions>
 
         <StackPanel Orientation="Horizontal" Margin="5 0 5 0" Grid.Row="1" Name="Units">
-            <Border CornerRadius="9" Background="#FF525252" Cursor="Hand" Margin="5 0 0 0" PreviewMouseDown="UnitClick">
-                <StackPanel Orientation="Horizontal" Margin="10 0 10 0">
-                    <Ellipse Width="5" Height="5" Fill="Black">
-                    </Ellipse>
-                    <Label Foreground="White" VerticalAlignment="Center" HorizontalAlignment="Center">
-                        CMDUnit
-                    </Label>
-                </StackPanel>
-            </Border>
 
             <Border CornerRadius="9" Background="#FF525252" Cursor="Hand" Margin="5 0 0 0" PreviewMouseDown="UnitClick">
                 <StackPanel Orientation="Horizontal" Margin="10 0 10 0">
@@ -30,16 +21,6 @@
                     </Ellipse>
                     <Label Foreground="White" VerticalAlignment="Center" HorizontalAlignment="Center">
                         CSharpUnit
-                    </Label>
-                </StackPanel>
-            </Border>
-
-            <Border CornerRadius="9" Background="#FF525252" Cursor="Hand" Margin="5 0 0 0" PreviewMouseDown="UnitClick">
-                <StackPanel Orientation="Horizontal" Margin="10 0 10 0">
-                    <Ellipse Width="5" Height="5" Fill="Black">
-                    </Ellipse>
-                    <Label Foreground="White" VerticalAlignment="Center" HorizontalAlignment="Center">
-                        IOUnit
                     </Label>
                 </StackPanel>
             </Border>
@@ -60,16 +41,6 @@
                     </Ellipse>
                     <Label Foreground="White" VerticalAlignment="Center" HorizontalAlignment="Center">
                         RequestUnit
-                    </Label>
-                </StackPanel>
-            </Border>
-
-            <Border CornerRadius="9" Background="#FF525252" Cursor="Hand" Margin="5 0 0 0" PreviewMouseDown="UnitClick">
-                <StackPanel Orientation="Horizontal" Margin="10 0 10 0">
-                    <Ellipse Width="5" Height="5" Fill="Black">
-                    </Ellipse>
-                    <Label Foreground="White" VerticalAlignment="Center" HorizontalAlignment="Center">
-                        WinApiUnit
                     </Label>
                 </StackPanel>
             </Border>

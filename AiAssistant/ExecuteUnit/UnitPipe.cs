@@ -15,11 +15,8 @@ namespace AiAssistant.ExecuteUnit
     {
         #region Unit Instances
 
-        public IOUnit IoUnit = new IOUnit();
-        public CMDUnit CmdUnit = new CMDUnit();
         public MouseUnit MouseUnit = new MouseUnit();
         public RequestUnit RequestUnit = new RequestUnit();
-        public WinApiUnit WinApiUnit = new WinApiUnit();
         public CSharpCodeUnit CSharpUnit = new CSharpCodeUnit();
 
         #endregion
@@ -79,11 +76,8 @@ namespace AiAssistant.ExecuteUnit
         public List<CapabilityInfo> GetCapabilities()
         {
             var AllCapabilities = new List<CapabilityInfo>();
-            if (IoUnit.Enable) AllCapabilities.AddRange(IOUnit.CapabilityManifest);
-            if (CmdUnit.Enable) AllCapabilities.AddRange(CMDUnit.CapabilityManifest);
             if (MouseUnit.Enable) AllCapabilities.AddRange(MouseUnit.CapabilityManifest);
             if (RequestUnit.Enable) AllCapabilities.AddRange(RequestUnit.CapabilityManifest);
-            if (WinApiUnit.Enable) AllCapabilities.AddRange(WinApiUnit.CapabilityManifest);
             if (CSharpUnit.Enable) AllCapabilities.AddRange(CSharpCodeUnit.CapabilityManifest);
             return AllCapabilities;
         }
@@ -99,7 +93,6 @@ namespace AiAssistant.ExecuteUnit
         private void AppendRulesAndCapabilities(StringBuilder Builder, string ContextInstruction)
         {
             bool HasCSharp = AICenter.LocalSetting.EnableCSharpCodeUnit;
-            bool HasCmd = AICenter.LocalSetting.EnableCMDUnit;
 
             // ── 1. ROLE ──────────────────────────────────────────────────────────────
             Builder.AppendLine("You are an AI assistant that controls a Windows PC for the user.");
@@ -135,11 +128,6 @@ namespace AiAssistant.ExecuteUnit
             {
                 Builder.AppendLine("- Use batch capabilities (C#) when > 5 simple steps would be needed.");
             }
-            else
-            if (HasCmd)
-            {
-                Builder.AppendLine("- Use batch capabilities (CMD) when > 5 simple steps would be needed.");
-            }
 
 
             Builder.AppendLine("- After 5 executed steps without completing the task, switch to CMD or C# immediately.");
@@ -147,22 +135,15 @@ namespace AiAssistant.ExecuteUnit
 
             // ── 6. SCRIPT OUTPUT RULES ────────────────────────────────────────────────
 
-            if (HasCSharp || HasCmd)
+            if (HasCSharp)
             {
                 Builder.AppendLine("## SCRIPT OUTPUT RULES");
 
-                if (HasCSharp)
-                {
-                    Builder.AppendLine("- C# scripts MUST end with   return <expression>;   to produce a visible result.");
-                    Builder.AppendLine("  BAD  → Console.WriteLine(result);   // output is invisible");
-                    Builder.AppendLine("  GOOD → return result;                // result is captured and shown to the user");
+                Builder.AppendLine("- C# scripts MUST end with   return <expression>;   to produce a visible result.");
+                Builder.AppendLine("  BAD  → Console.WriteLine(result);   // output is invisible");
+                Builder.AppendLine("  GOOD → return result;                // result is captured and shown to the user");
 
-                    Builder.AppendLine("- If the task does NOT need to return data to the user (e.g. writing a file, moving, deleting), use return null;.");
-                }
-                else if (HasCmd)
-                {
-                    Builder.AppendLine("- CMD commands MUST print the final answer to stdout (e.g. echo, type, dir).");
-                }
+                Builder.AppendLine("- If the task does NOT need to return data to the user (e.g. writing a file, moving, deleting), use return null;.");
 
                 Builder.AppendLine();
             }
@@ -199,6 +180,8 @@ namespace AiAssistant.ExecuteUnit
             Builder.AppendLine("## CRITICAL CONSTRAINTS");
             Builder.AppendLine("- Action MUST be one of the names listed under AVAILABLE CAPABILITIES.");
             Builder.AppendLine("- Never produce output through Console.Write / print / log — only via return values.");
+            Builder.AppendLine("- Each capability is a standalone operation. You CANNOT call other capabilities");
+            Builder.AppendLine("  If you need multiple operations, use HasMoreSteps = true to chain them as separate steps.");
             Builder.AppendLine();
         }
 
@@ -271,7 +254,6 @@ namespace AiAssistant.ExecuteUnit
         public string BuildErrorRetryPrompt(string UserInput, ExecutionResult FailedResult)
         {
             bool HasCSharp = AICenter.LocalSetting.EnableCSharpCodeUnit;
-            bool HasCmd = AICenter.LocalSetting.EnableCMDUnit;
 
 
             string FailInstruction =
@@ -281,8 +263,6 @@ namespace AiAssistant.ExecuteUnit
 
             if (HasCSharp)
                 FailInstruction += "If you have already executed 5+ steps, switch to RunCSharpCode immediately.";
-            else if (HasCmd)
-                FailInstruction += "If you have already executed 5+ steps, switch to CMD immediately.";
 
             var Builder = new StringBuilder();
             AppendRulesAndCapabilities(Builder,
@@ -318,11 +298,6 @@ namespace AiAssistant.ExecuteUnit
             if (HasCSharp)
             {
                 Builder.AppendLine($"{Step++}. If the error is a C# compile/runtime error, fix the code and use RunCSharpCode.");
-            }
-            else
-            if (HasCmd)
-            {
-                Builder.AppendLine($"{Step++}. If the error is a CMD error, fix the command.");
             }
 
             Builder.AppendLine($"{Step++}. Respond with a corrected JSON action.");
@@ -450,56 +425,6 @@ namespace AiAssistant.ExecuteUnit
         /// </summary>
         private object Dispatch(string ActionName, JObject Params)
         {
-            // ---- IOUnit ----
-            if (IOUnit.CapabilityManifest.Any(Cap => Cap.Name == ActionName))
-            {
-                switch (ActionName)
-                {
-                    case "GetFiles":
-                        return IoUnit.GetFiles(
-                            Params["Path"]?.Value<string>(),
-                            Params["Recursive"]?.Value<bool>() ?? false);
-                    case "ReadText":
-                        return IoUnit.ReadText(Params["Path"]?.Value<string>());
-                    case "WriteText":
-                        IoUnit.WriteText(
-                            Params["Path"]?.Value<string>(),
-                            Params["Content"]?.Value<string>(),
-                            Params["Overwrite"]?.Value<bool>() ?? true);
-                        return null;
-                    case "Move":
-                        IoUnit.Move(
-                            Params["Source"]?.Value<string>(),
-                            Params["Dest"]?.Value<string>(),
-                            Params["Overwrite"]?.Value<bool>() ?? true);
-                        return null;
-                    case "Copy":
-                        IoUnit.Copy(
-                            Params["Source"]?.Value<string>(),
-                            Params["Dest"]?.Value<string>(),
-                            Params["Overwrite"]?.Value<bool>() ?? true);
-                        return null;
-                    case "DeleteToRecycleBin":
-                        IoUnit.DeleteToRecycleBin(Params["Path"]?.Value<string>());
-                        return null;
-                    case "CreateDirectory":
-                        IoUnit.CreateDirectory(Params["Path"]?.Value<string>());
-                        return null;
-                }
-            }
-
-            // ---- CMDUnit ----
-            if (CMDUnit.CapabilityManifest.Any(Cap => Cap.Name == ActionName))
-            {
-                switch (ActionName)
-                {
-                    case "ExecuteAndGetOutput":
-                        return CmdUnit.ExecuteAndGetOutput(
-                            Params["Command"]?.Value<string>(),
-                            Params["TimeoutMs"]?.Value<int>() ?? 10000);
-                }
-            }
-
             // ---- MouseUnit ----
             if (MouseUnit.CapabilityManifest.Any(Cap => Cap.Name == ActionName))
             {
@@ -531,54 +456,6 @@ namespace AiAssistant.ExecuteUnit
                             Params["Body"]?.Value<string>(),
                             Params["ContentType"]?.Value<string>() ?? "application/json",
                             Params["TimeoutMs"]?.Value<int>() ?? 10000);
-                }
-            }
-
-            // ---- WinApiUnit ----
-            if (WinApiUnit.CapabilityManifest.Any(Cap => Cap.Name == ActionName))
-            {
-                switch (ActionName)
-                {
-                    case "GetForegroundWindow":
-                        return WinApiUnit.GetForegroundWindowHandle();
-                    case "FindWindow":
-                        return WinApiUnit.FindWindowHandle(
-                            Params["ClassName"]?.Value<string>(),
-                            Params["Title"]?.Value<string>());
-                    case "FindWindows":
-                        return WinApiUnit.FindAllWindows();
-                    case "GetWindowText":
-                        return WinApiUnit.GetWindowTitle(
-                            new IntPtr(Params["Hwnd"]?.Value<long>() ?? 0));
-                    case "SetWindowText":
-                        return WinApiUnit.SetWindowTitle(
-                            new IntPtr(Params["Hwnd"]?.Value<long>() ?? 0),
-                            Params["Text"]?.Value<string>());
-                    case "EnumProcesses":
-                        return WinApiUnit.EnumProcesses();
-                    case "KillProcess":
-                        return WinApiUnit.KillProcess(
-                            Params["Pid"]?.Value<int>() ?? -1,
-                            Params["Name"]?.Value<string>());
-                    case "GetProcessIdUnderMouse":
-                        return WinApiUnit.GetProcessIdUnderMouse();
-                    case "GetProcessInfo":
-                        return WinApiUnit.GetProcessInfo(
-                            Params["Pid"]?.Value<int>() ?? -1);
-                    case "GetProcessUnderMouse":
-                        return WinApiUnit.GetProcessUnderMouse();
-                    case "SendMessage":
-                        return WinApiUnit.SendWindowMessage(
-                            new IntPtr(Params["Hwnd"]?.Value<long>() ?? 0),
-                            Params["Msg"]?.Value<int>() ?? 0,
-                            new IntPtr(Params["WParam"]?.Value<long>() ?? 0),
-                            new IntPtr(Params["LParam"]?.Value<long>() ?? 0));
-                    case "PostMessage":
-                        return WinApiUnit.PostWindowMessage(
-                            new IntPtr(Params["Hwnd"]?.Value<long>() ?? 0),
-                            Params["Msg"]?.Value<int>() ?? 0,
-                            new IntPtr(Params["WParam"]?.Value<long>() ?? 0),
-                            new IntPtr(Params["LParam"]?.Value<long>() ?? 0));
                 }
             }
 

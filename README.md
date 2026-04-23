@@ -9,7 +9,6 @@ It allows AI to operate the local computer through structured tool interfaces, t
 ## ⚙️ Features
 
 - 📁 File system operations (read / write / move / delete)
-- 💻 CMD command execution
 - 🖱️ Mouse and UI automation
 - 🪟 Windows API control (windows, processes, messages)
 - 🌐 HTTP requests
@@ -20,7 +19,7 @@ It allows AI to operate the local computer through structured tool interfaces, t
 
 ## ⚠️ Important Warning
 
-This system allows AI to execute **CMD commands** and **run C# code directly on your machine**.
+This system allows AI to execute **C# Script code directly on your machine**.
 
 These capabilities are extremely powerful and **potentially dangerous**.
 

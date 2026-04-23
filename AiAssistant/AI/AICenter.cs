@@ -20,12 +20,9 @@ namespace AiAssistant.AI
 
         public int LMStudioPort { get; set; } = 1234;
 
-        public bool EnableCMDUnit { get; set; } = false;//Enabling CMD means that AI can execute DOS commands. AI can do everything that CMD can do. Risk Level: Shell, It is strongly recommended to enable the sandbox when using this feature.
         public bool EnableCSharpCodeUnit { get; set; } = true; //Enabling script generation means that AI can almost completely control your computer. Risk Level: Shell，It is strongly recommended to enable the sandbox when using this feature.
-        public bool EnableIOUnit { get; set; } = false;//Enabling file operations means that AI can access, add, modify, and delete any of your disk files. Risk Level: Medium，It is strongly recommended to enable the sandbox when using this feature.
         public bool EnableMouseUnit { get; set; } = false;
         public bool EnableRequestUnit { get; set; } = true;
-        public bool EnableWinApiUnit { get; set; } = false;
 
         public string GetChatGptKey()
         {

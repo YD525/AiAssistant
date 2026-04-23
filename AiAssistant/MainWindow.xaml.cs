@@ -220,17 +220,9 @@ namespace AiAssistant
         }
         public void SyncConfig()
         {
-            if (AICenter.LocalSetting.EnableCMDUnit)
-            {
-                Pipe.CmdUnit.Enable = true;
-            }
             if (AICenter.LocalSetting.EnableCSharpCodeUnit)
             {
                 Pipe.CSharpUnit.Enable = true;
-            }
-            if (AICenter.LocalSetting.EnableIOUnit)
-            {
-                Pipe.IoUnit.Enable = true;
             }
             if (AICenter.LocalSetting.EnableMouseUnit)
             {
@@ -239,10 +231,6 @@ namespace AiAssistant
             if (AICenter.LocalSetting.EnableRequestUnit)
             {
                 Pipe.RequestUnit.Enable = true;
-            }
-            if (AICenter.LocalSetting.EnableWinApiUnit)
-            {
-                Pipe.WinApiUnit.Enable = true;
             }
 
             SyncSandBox();
@@ -281,33 +269,9 @@ namespace AiAssistant
 
                                 switch (GetUnitName)
                                 {
-                                    case "CMDUnit":
-                                        {
-                                            if (Pipe.CmdUnit.Enable)
-                                            {
-                                                StateLight.Fill = new SolidColorBrush(Colors.Blue);
-                                            }
-                                            else
-                                            {
-                                                StateLight.Fill = new SolidColorBrush(Colors.Black);
-                                            }
-                                        }
-                                        break;
                                     case "CSharpUnit":
                                         {
                                             if (Pipe.CSharpUnit.Enable)
-                                            {
-                                                StateLight.Fill = new SolidColorBrush(Colors.Blue);
-                                            }
-                                            else
-                                            {
-                                                StateLight.Fill = new SolidColorBrush(Colors.Black);
-                                            }
-                                        }
-                                        break;
-                                    case "IOUnit":
-                                        {
-                                            if (Pipe.IoUnit.Enable)
                                             {
                                                 StateLight.Fill = new SolidColorBrush(Colors.Blue);
                                             }
@@ -332,18 +296,6 @@ namespace AiAssistant
                                     case "RequestUnit":
                                         {
                                             if (Pipe.RequestUnit.Enable)
-                                            {
-                                                StateLight.Fill = new SolidColorBrush(Colors.Blue);
-                                            }
-                                            else
-                                            {
-                                                StateLight.Fill = new SolidColorBrush(Colors.Black);
-                                            }
-                                        }
-                                        break;
-                                    case "WinApiUnit":
-                                        {
-                                            if (Pipe.WinApiUnit.Enable)
                                             {
                                                 StateLight.Fill = new SolidColorBrush(Colors.Blue);
                                             }
@@ -379,22 +331,6 @@ namespace AiAssistant
 
                         switch (GetUnitName)
                         {
-                            case "CMDUnit":
-                                {
-                                    if (Pipe.CmdUnit.Enable)
-                                    {
-                                        StateLight.Fill = new SolidColorBrush(Colors.Black);
-                                        Pipe.CmdUnit.Enable = false;
-                                        AICenter.LocalSetting.EnableCMDUnit = false;
-                                    }
-                                    else
-                                    {
-                                        StateLight.Fill = new SolidColorBrush(Colors.Blue);
-                                        Pipe.CmdUnit.Enable = true;
-                                        AICenter.LocalSetting.EnableCMDUnit = true;
-                                    }
-                                }
-                            break;
                             case "CSharpUnit":
                                 {
                                     if (Pipe.CSharpUnit.Enable)
@@ -408,22 +344,6 @@ namespace AiAssistant
                                         StateLight.Fill = new SolidColorBrush(Colors.Blue);
                                         Pipe.CSharpUnit.Enable = true;
                                         AICenter.LocalSetting.EnableCSharpCodeUnit = true;
-                                    }
-                                }
-                            break;
-                            case "IOUnit":
-                                {
-                                    if (Pipe.IoUnit.Enable)
-                                    {
-                                        StateLight.Fill = new SolidColorBrush(Colors.Black);
-                                        Pipe.IoUnit.Enable = false;
-                                        AICenter.LocalSetting.EnableIOUnit = false;
-                                    }
-                                    else
-                                    {
-                                        StateLight.Fill = new SolidColorBrush(Colors.Blue);
-                                        Pipe.IoUnit.Enable = true;
-                                        AICenter.LocalSetting.EnableIOUnit = true;
                                     }
                                 }
                             break;
@@ -456,22 +376,6 @@ namespace AiAssistant
                                         StateLight.Fill = new SolidColorBrush(Colors.Blue);
                                         Pipe.RequestUnit.Enable = true;
                                         AICenter.LocalSetting.EnableRequestUnit = true;
-                                    }
-                                }
-                            break;
-                            case "WinApiUnit":
-                                {
-                                    if (Pipe.WinApiUnit.Enable)
-                                    {
-                                        StateLight.Fill = new SolidColorBrush(Colors.Black);
-                                        Pipe.WinApiUnit.Enable = false;
-                                        AICenter.LocalSetting.EnableWinApiUnit = false;
-                                    }
-                                    else
-                                    {
-                                        StateLight.Fill = new SolidColorBrush(Colors.Blue);
-                                        Pipe.WinApiUnit.Enable = true;
-                                        AICenter.LocalSetting.EnableWinApiUnit = true;
                                     }
                                 }
                             break;
