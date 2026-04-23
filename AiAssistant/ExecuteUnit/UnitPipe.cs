@@ -116,14 +116,10 @@ namespace AiAssistant.ExecuteUnit
 
             // ── 4. HasMoreSteps RULES ─────────────────────────────────────────────────
             Builder.AppendLine("## HasMoreSteps RULES");
+            Builder.AppendLine("- You can break this down into multiple steps; it's a continuous dialogue.");
             Builder.AppendLine("  true  → task is NOT finished; more steps will be executed.");
             Builder.AppendLine("  false → task is FULLY completed by this step.");
             Builder.AppendLine("Never invert this logic.");
-            Builder.AppendLine();
-
-            // ── 5. EFFICIENCY RULES ───────────────────────────────────────────────────
-            Builder.AppendLine("## EFFICIENCY RULES");
-            Builder.AppendLine("- You can break this down into multiple steps; it's a continuous dialogue.");
             Builder.AppendLine();
 
             // ── 6. SCRIPT OUTPUT RULES ────────────────────────────────────────────────
