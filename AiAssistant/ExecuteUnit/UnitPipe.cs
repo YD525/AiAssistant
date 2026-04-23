@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using AiAssistant.AI;
 using AiAssistant.Memory;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -95,8 +96,11 @@ namespace AiAssistant.ExecuteUnit
         /// Appends the shared role definition, JSON format rules (including the Continue field),
         /// efficiency rules, examples, and the full capability list into Builder.
         /// </summary>
-        private void AppendRulesAndCapabilities(StringBuilder Builder, string contextInstruction)
+        private void AppendRulesAndCapabilities(StringBuilder Builder, string ContextInstruction)
         {
+            bool HasCSharp = AICenter.LocalSetting.EnableCSharpCodeUnit;
+            bool HasCmd = AICenter.LocalSetting.EnableCMDUnit;
+
             // ── 1. ROLE ──────────────────────────────────────────────────────────────
             Builder.AppendLine("You are an AI assistant that controls a Windows PC for the user.");
             Builder.AppendLine("Respond ONLY with one JSON object. No markdown, no explanation, no extra text.");
@@ -114,7 +118,7 @@ namespace AiAssistant.ExecuteUnit
 
             // ── 3. THIS TURN ─────────────────────────────────────────────────────────
             Builder.AppendLine("## THIS TURN");
-            Builder.AppendLine(contextInstruction?.Trim());
+            Builder.AppendLine(ContextInstruction?.Trim());
             Builder.AppendLine();
 
             // ── 4. HasMoreSteps RULES ─────────────────────────────────────────────────
@@ -127,25 +131,51 @@ namespace AiAssistant.ExecuteUnit
             // ── 5. EFFICIENCY RULES ───────────────────────────────────────────────────
             Builder.AppendLine("## EFFICIENCY RULES");
             Builder.AppendLine("- Complete the task in 1–3 steps whenever possible.");
-            Builder.AppendLine("- Use batch capabilities (CMD / C#) when > 5 simple steps would be needed.");
+            if (HasCSharp)
+            {
+                Builder.AppendLine("- Use batch capabilities (C#) when > 5 simple steps would be needed.");
+            }
+            else
+            if (HasCmd)
+            {
+                Builder.AppendLine("- Use batch capabilities (CMD) when > 5 simple steps would be needed.");
+            }
+
+
             Builder.AppendLine("- After 5 executed steps without completing the task, switch to CMD or C# immediately.");
             Builder.AppendLine();
 
             // ── 6. SCRIPT OUTPUT RULES ────────────────────────────────────────────────
-            Builder.AppendLine("## SCRIPT OUTPUT RULES  (applies to RunCSharpCode and ExecuteAndGetOutput)");
-            Builder.AppendLine("- C# scripts MUST end with   return <expression>;   to produce a visible result.");
-            Builder.AppendLine("  BAD  → Console.WriteLine(result);   // output is invisible");
-            Builder.AppendLine("  GOOD → return result;                // result is captured and shown to the user");
-            Builder.AppendLine("- CMD commands MUST print the final answer to stdout (e.g. echo, type, dir).");
-            Builder.AppendLine("- If the task only produces side-effects (file write, move, delete), return null is fine.");
-            Builder.AppendLine();
 
-            // ── 7. C# SCRIPT STYLE ────────────────────────────────────────────────────
-            Builder.AppendLine("## C# SCRIPT STYLE");
-            Builder.AppendLine("- Top-level statements only (no class, no Main method).");
-            Builder.AppendLine("- Pre-imported: System, System.IO, System.Linq, System.Collections.Generic,");
-            Builder.AppendLine("  System.Text, System.Threading.Tasks, System.Diagnostics.");
-            Builder.AppendLine("- Do NOT add using directives for these namespaces.");
+            if (HasCSharp || HasCmd)
+            {
+                Builder.AppendLine("## SCRIPT OUTPUT RULES");
+
+                if (HasCSharp)
+                {
+                    Builder.AppendLine("- C# scripts MUST end with   return <expression>;   to produce a visible result.");
+                    Builder.AppendLine("  BAD  → Console.WriteLine(result);   // output is invisible");
+                    Builder.AppendLine("  GOOD → return result;                // result is captured and shown to the user");
+                    Builder.AppendLine("- If the task only produces side-effects (file write, move, delete), return null is fine.");
+                }
+                else if (HasCmd)
+                {
+                    Builder.AppendLine("- CMD commands MUST print the final answer to stdout (e.g. echo, type, dir).");
+                }
+
+                Builder.AppendLine();
+            }
+
+            if (HasCSharp)
+            {
+                // ── 7. C# SCRIPT STYLE ────────────────────────────────────────────────────
+                Builder.AppendLine("## C# SCRIPT STYLE");
+                Builder.AppendLine("- Top-level statements only (no class, no Main method).");
+                Builder.AppendLine("- Pre-imported: System, System.IO, System.Linq, System.Collections.Generic,");
+                Builder.AppendLine("  System.Text, System.Threading.Tasks, System.Diagnostics.");
+                Builder.AppendLine("- Do NOT add using directives for these namespaces.");
+            }
+
             Builder.AppendLine();
 
             // ── 8. AVAILABLE CAPABILITIES ─────────────────────────────────────────────
@@ -241,12 +271,24 @@ namespace AiAssistant.ExecuteUnit
         /// </summary>
         public string BuildErrorRetryPrompt(string UserInput, ExecutionResult FailedResult)
         {
+            bool HasCSharp = AICenter.LocalSetting.EnableCSharpCodeUnit;
+            bool HasCmd = AICenter.LocalSetting.EnableCMDUnit;
+
+
+            string FailInstruction =
+            "The previous action FAILED. " +
+            "Read the error details carefully and choose a corrected approach. " +
+            "Do NOT repeat the exact same Action + Params — that will fail again. ";
+
+            if (HasCSharp)
+                FailInstruction += "If you have already executed 5+ steps, switch to RunCSharpCode immediately.";
+            else if (HasCmd)
+                FailInstruction += "If you have already executed 5+ steps, switch to CMD immediately.";
+
             var Builder = new StringBuilder();
             AppendRulesAndCapabilities(Builder,
-                "The previous action FAILED. " +
-                "Read the error details carefully and choose a corrected approach. " +
-                "Do NOT repeat the exact same Action + Params — that will fail again. " +
-                "If you have already executed 5+ steps, switch to CMD or RunCSharpCode immediately.");
+                FailInstruction);
+
 
             Builder.AppendLine("## USER REQUEST");
             Builder.AppendLine(UserInput?.Trim());
@@ -270,11 +312,21 @@ namespace AiAssistant.ExecuteUnit
 
             Builder.AppendLine();
             Builder.AppendLine("## INSTRUCTIONS");
-            Builder.AppendLine("1. Identify the root cause from the error message above.");
-            Builder.AppendLine("2. Pick a different Action, fix the parameters, or rewrite the script.");
-            Builder.AppendLine("3. If the error is a C# compile/runtime error, fix the code and use RunCSharpCode.");
-            Builder.AppendLine("4. If the error is a CMD error, fix the command or switch to RunCSharpCode.");
-            Builder.AppendLine("5. Respond with a corrected JSON action.");
+            int Step = 1;
+            Builder.AppendLine($"{Step++}. Identify the root cause from the error message above.");
+            Builder.AppendLine($"{Step++}. Pick a different Action, fix the parameters, or rewrite the script.");
+
+            if (HasCSharp)
+            {
+                Builder.AppendLine($"{Step++}. If the error is a C# compile/runtime error, fix the code and use RunCSharpCode.");
+            }
+            else
+            if (HasCmd)
+            {
+                Builder.AppendLine($"{Step++}. If the error is a CMD error, fix the command.");
+            }
+
+            Builder.AppendLine($"{Step++}. Respond with a corrected JSON action.");
 
             return Builder.ToString();
         }
