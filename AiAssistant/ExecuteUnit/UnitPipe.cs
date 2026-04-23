@@ -123,14 +123,7 @@ namespace AiAssistant.ExecuteUnit
 
             // ── 5. EFFICIENCY RULES ───────────────────────────────────────────────────
             Builder.AppendLine("## EFFICIENCY RULES");
-            Builder.AppendLine("- Complete the task in 1–3 steps whenever possible.");
-            if (HasCSharp)
-            {
-                Builder.AppendLine("- Use batch capabilities (C#) when > 5 simple steps would be needed.");
-            }
-
-
-            Builder.AppendLine("- After 5 executed steps without completing the task, switch to CMD or C# immediately.");
+            Builder.AppendLine("- You can break this down into multiple steps; it's a continuous dialogue.");
             Builder.AppendLine();
 
             // ── 6. SCRIPT OUTPUT RULES ────────────────────────────────────────────────
