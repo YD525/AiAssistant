@@ -57,7 +57,13 @@ namespace AiAssistant
                         do
                         {
                             string AiReply = "";
-                            if (AICenter.Gemini != null)
+
+                            if (AICenter.Claude != null)
+                            {
+                                AiReply = AICenter.Claude.QueryAI(Prompt);
+                                SetLog("Claude", AiReply);
+                            }
+                            else if (AICenter.Gemini != null)
                             {
                                 AiReply = AICenter.Gemini.QueryAI(Prompt);
                                 SetLog("Gemini", AiReply);

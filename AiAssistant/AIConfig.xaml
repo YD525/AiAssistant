@@ -62,6 +62,32 @@
             <StackPanel Orientation="Vertical">
                 <StackPanel Orientation="Horizontal">
                     <Label>
+                        Claude
+                    </Label>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal">
+                    <Label>
+                        ApiKey
+                    </Label>
+                    <TextBox Width="150" VerticalContentAlignment="Center" Name="ClaudeKey" TextChanged="ClaudeKey_TextChanged">
+                    </TextBox>
+
+                    <Label Margin="5 0 0 0">
+                        Model
+                    </Label>
+                    <TextBox Width="150" VerticalContentAlignment="Center" Name="ClaudeModel" TextChanged="ClaudeModel_TextChanged">
+                        
+                    </TextBox>
+
+                    <CheckBox Margin="5 0 0 0" VerticalAlignment="Center" Name="ClaudeCheck" Click="ClaudeCheck_Click">
+                        Enable
+                    </CheckBox>
+                </StackPanel>
+            </StackPanel>
+
+            <StackPanel Orientation="Vertical">
+                <StackPanel Orientation="Horizontal">
+                    <Label>
                         LMStudio
                     </Label>
                 </StackPanel>

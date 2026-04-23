@@ -5,6 +5,8 @@ using System.Text;
 using AiAssistant.Request;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json;
+using AiAssistant.ConvertManagement;
+using System.IO;
 
 namespace AiAssistant.Platform
 {
@@ -23,12 +25,30 @@ namespace AiAssistant.Platform
     public class OpenAIMessage
     {
         public string role { get; set; }
-        public string content { get; set; }
+
+        public object content { get; set; }
 
         public OpenAIMessage(string role, string content)
         {
             this.role = role;
             this.content = content;
+        }
+
+        public OpenAIMessage(string role, string text, string base64Image, string mimeType = "image/jpeg")
+        {
+            this.role = role;
+            this.content = new object[]
+            {
+            new { type = "text", text = text },
+            new
+            {
+                type = "image_url",
+                image_url = new
+                {
+                    url = $"data:{mimeType};base64,{base64Image}"
+                }
+            }
+            };
         }
     }
 
@@ -60,14 +80,11 @@ namespace AiAssistant.Platform
         public int index { get; set; }
         public object logprobs { get; set; }
         public string finish_reason { get; set; }
-        public OpenAIRMessage message { get; set; }
+        public OpenAIMessage message { get; set; }
     }
 
-    public class OpenAIRMessage
-    {
-        public string role { get; set; }
-        public string content { get; set; }
-    }
+
+   
     public class LMStudio 
     {
         public int LocalPort { get; set; } = 0;
@@ -200,7 +217,7 @@ namespace AiAssistant.Platform
                     string GetStr = "";
                     if (GetResult.choices.Length > 0)
                     {
-                        GetStr = GetResult.choices[0].message.content.Trim();
+                        GetStr = ConvertHelper.ObjToStr(GetResult.choices[0].message.content).Trim();
                     }
                     if (GetStr.Trim().Length > 0)
                     {
@@ -212,6 +229,25 @@ namespace AiAssistant.Platform
                     }
                 }
             }
+            return string.Empty;
+        }
+
+
+        public string QueryAIWithImage(string text, string Base64,string MimeType = "image/jpeg")
+        {
+            if (CurrentModel == string.Empty)
+                GetCurrentModel();
+
+            OpenAIItem Item = new OpenAIItem(CurrentModel);
+            Item.store = true;
+            Item.messages.Add(new OpenAIMessage("user", text, Base64, MimeType));
+
+            string Recv = "";
+            var Result = CallAI(Item, ref Recv);
+
+            if (Result?.choices != null && Result.choices.Length > 0)
+                return ConvertHelper.ObjToStr(Result.choices[0].message.content)?.Trim() ?? string.Empty;
+
             return string.Empty;
         }
     }

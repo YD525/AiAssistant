@@ -145,7 +145,6 @@ namespace AiAssistant.ExecuteUnit
                 // ── 7. C# SCRIPT STYLE ────────────────────────────────────────────────────
                 Builder.AppendLine("## C# SCRIPT STYLE");
                 Builder.AppendLine("- Top-level statements only (no class, no Main method).");
-                Builder.AppendLine("- Pre-imported: System, System.IO, System.Linq, System.Collections.Generic,");
                 Builder.AppendLine("- ALL 'using' directives MUST be placed at the top of the script before any other code.");
 
 

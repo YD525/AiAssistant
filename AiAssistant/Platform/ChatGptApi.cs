@@ -16,12 +16,26 @@ namespace AiAssistant.Platform
     public class ChatGptMessage
     {
         public string role { get; set; }
-        public string content { get; set; }
+        public object content { get; set; }
 
         public ChatGptMessage(string role, string content)
         {
             this.role = role;
             this.content = content;
+        }
+
+        public ChatGptMessage(string role, string text, string base64Image, string mimeType = "image/jpeg")
+        {
+            this.role = role;
+            this.content = new object[]
+            {
+            new { type = "text", text = text },
+            new
+            {
+                type = "image_url",
+                image_url = new { url = $"data:{mimeType};base64,{base64Image}" }
+            }
+            };
         }
     }
 
@@ -109,6 +123,28 @@ namespace AiAssistant.Platform
                 return null;
             }
         }
+
+        private string QueryAIWithImage(string text, string base64, string mimeType)
+        {
+            var Item = new ChatGptItem
+            {
+                model = Model,
+                store = true,
+                messages = new List<ChatGptMessage>
+            {
+                new ChatGptMessage("user", text, base64, mimeType)
+            }
+            };
+
+            string Recv = "";
+            var Result = CallAI(ApiKey, Item, ref Recv);
+
+            if (Result?.choices != null && Result.choices.Length > 0)
+                return Result.choices[0].message.content?.Trim() ?? string.Empty;
+
+            return string.Empty;
+        }
+
         //"Important: When translating, strictly keep any text inside angle brackets (< >) or square brackets ([ ]) unchanged. Do not modify, translate, or remove them.\n\n"
         public string QueryAI(string AIPrompt)
         {

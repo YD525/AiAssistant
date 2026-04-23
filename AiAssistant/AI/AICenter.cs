@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using System.Text;
+using System.Windows.Forms;
 using AiAssistant.FileManagement;
 using AiAssistant.Platform;
 using Newtonsoft.Json;
@@ -10,13 +11,17 @@ namespace AiAssistant.AI
     {
         public bool EnableChatGpt { get; set; } = false;
         public bool EnableGemini { get; set; } = false;
+        public bool EnableClaude { get; set; } = false;
         public bool EnableLMStudio { get; set; } = false;
 
         public string ChatGptModel { get; set; } = "gpt-4.1-nano";
         public string GeminiModel { get; set; } = "gemini-2.5-flash";
+        public string ClaudeModel { get; set; } = "";
 
         public byte[] ChatGptKey { get; set; }
         public byte[] GeminiKey { get; set; }
+
+        public byte[] ClaudeKey { get; set; }
 
         public int LMStudioPort { get; set; } = 1234;
 
@@ -42,6 +47,15 @@ namespace AiAssistant.AI
             return string.Empty;
         }
 
+        public string GetClaudeKey()
+        {
+            if (ClaudeKey != null && ClaudeKey.Length > 0)
+            {
+                return Encoding.UTF8.GetString(ClaudeKey);
+            }
+            return string.Empty;
+        }
+
         public AISetting Clone()
         {
             return new AISetting
@@ -49,10 +63,17 @@ namespace AiAssistant.AI
                 EnableChatGpt = this.EnableChatGpt,
                 EnableGemini = this.EnableGemini,
                 EnableLMStudio = this.EnableLMStudio,
+                EnableClaude = this.EnableClaude,
+                EnableMouseUnit = this.EnableMouseUnit,
+                EnableCSharpCodeUnit = this.EnableCSharpCodeUnit,
+                EnableRequestUnit = this.EnableRequestUnit,
                 LMStudioPort = this.LMStudioPort,
-
+                ChatGptModel = this.ChatGptModel,
+                GeminiModel = this.GeminiModel,
+                ClaudeModel = this.ClaudeModel,
                 ChatGptKey = this.ChatGptKey != null ? (byte[])this.ChatGptKey.Clone() : null,
-                GeminiKey = this.GeminiKey != null ? (byte[])this.GeminiKey.Clone() : null
+                GeminiKey = this.GeminiKey != null ? (byte[])this.GeminiKey.Clone() : null,
+                ClaudeKey = this.ClaudeKey != null ? (byte[])this.ClaudeKey.Clone() : null
             };
         }
     }
@@ -79,6 +100,7 @@ namespace AiAssistant.AI
         public static ChatGptApi ChatGpt = null;
         public static GeminiApi Gemini = null;
         public static LMStudio LocalAI = null;
+        public static ClaudeApi Claude = null;
 
         public static void SyncAIConfig()
         {
@@ -100,6 +122,16 @@ namespace AiAssistant.AI
             else
             {
                 Gemini = null;
+            }
+
+            if (LocalSetting.EnableClaude && LocalSetting.GetClaudeKey().Length > 0)
+            {
+                Claude = new ClaudeApi();
+                Claude.Init(LocalSetting.ClaudeModel, LocalSetting.GetClaudeKey(), null);
+            }
+            else
+            {
+                Claude = null;
             }
 
             if (LocalSetting.EnableLMStudio)
@@ -142,6 +174,12 @@ namespace AiAssistant.AI
                 {
                     LocalSetting.GeminiKey = XORDecrypt(LocalSetting.GeminiKey);
                 }
+
+            if (LocalSetting.ClaudeKey != null)
+                if (LocalSetting.ClaudeKey.Length > 0)
+                {
+                    LocalSetting.ClaudeKey = XORDecrypt(LocalSetting.ClaudeKey);
+                }
         }
 
         public static void Save()
@@ -162,7 +200,13 @@ namespace AiAssistant.AI
                     TempLocalSetting.GeminiKey = XOREncrypt(TempLocalSetting.GeminiKey);
                 }
 
-            string GetJson = JsonConvert.SerializeObject(LocalSetting);
+            if (LocalSetting.ClaudeKey != null)
+                if (TempLocalSetting.ClaudeKey.Length > 0)
+                {
+                    TempLocalSetting.ClaudeKey = XOREncrypt(TempLocalSetting.ClaudeKey);
+                }
+
+            string GetJson = JsonConvert.SerializeObject(TempLocalSetting);
 
             DataHelper.WriteFile(ConfigPath, Encoding.UTF8.GetBytes(GetJson));
         }

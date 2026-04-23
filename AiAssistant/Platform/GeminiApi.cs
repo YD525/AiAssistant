@@ -18,7 +18,17 @@ namespace AiAssistant.Platform
 
     public class GeminiPart
     {
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public string text { get; set; }
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public GeminiInlineData inlineData { get; set; }
+    }
+
+    public class GeminiInlineData
+    {
+        public string mimeType { get; set; }
+        public string data { get; set; }  
     }
 
 
@@ -79,6 +89,39 @@ namespace AiAssistant.Platform
             this.Model = Model;
             this.ApiKey = ApiKey;
             this.ProxyRef = Proxy;
+        }
+
+        private string QueryAIWithImage(string text, string base64, string mimeType)
+        {
+            var Content = new GeminiContent();
+
+            Content.parts.Add(new GeminiPart { text = text });
+
+            Content.parts.Add(new GeminiPart
+            {
+                inlineData = new GeminiInlineData
+                {
+                    mimeType = mimeType,
+                    data = base64
+                }
+            });
+
+            var Item = new GeminiItem();
+            Item.contents.Add(Content);
+
+            string Recv = "";
+            var Result = CallAI(ApiKey, Item, ref Recv);
+
+            if (Result?.candidates != null && Result.candidates.Length > 0)
+            {
+                try
+                {
+                    return Result.candidates[0].content.parts[0].text?.Trim() ?? string.Empty;
+                }
+                catch { return string.Empty; }
+            }
+
+            return string.Empty;
         }
 
         public string QueryAI(string AIPrompt)

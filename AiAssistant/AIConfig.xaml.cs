@@ -26,6 +26,10 @@ namespace AiAssistant
             {
                 GeminiCheck.IsChecked = true;
             }
+            if (AICenter.LocalSetting.EnableClaude)
+            {
+                ClaudeCheck.IsChecked = true;
+            }
             if (AICenter.LocalSetting.EnableLMStudio)
             {
                 LMStudioCheck.IsChecked = true;
@@ -33,10 +37,13 @@ namespace AiAssistant
 
             ChatGptKey.Text = AICenter.LocalSetting.GetChatGptKey();
             GeminiKey.Text = AICenter.LocalSetting.GetGeminiKey();
+            ClaudeKey.Text = AICenter.LocalSetting.GetClaudeKey();
+
             LMPort.Text = AICenter.LocalSetting.LMStudioPort.ToString();
 
             ChatGptModel.Text = AICenter.LocalSetting.ChatGptModel;
             GeminiModel.Text = AICenter.LocalSetting.GeminiModel;
+            ClaudeModel.Text = AICenter.LocalSetting.ClaudeModel;
         }
         private void ChatGptCheck_Click(object sender, RoutedEventArgs e)
         {
@@ -44,6 +51,8 @@ namespace AiAssistant
             {
                 AICenter.LocalSetting.EnableChatGpt = true;
 
+                ClaudeCheck.IsChecked = false;
+                AICenter.LocalSetting.EnableClaude = false;
                 GeminiCheck.IsChecked = false;
                 AICenter.LocalSetting.EnableGemini = false;
                 LMStudioCheck.IsChecked = false;
@@ -59,8 +68,27 @@ namespace AiAssistant
             {
                 AICenter.LocalSetting.EnableGemini = true;
 
+                ClaudeCheck.IsChecked = false;
+                AICenter.LocalSetting.EnableClaude = false;
                 ChatGptCheck.IsChecked = false;
                 AICenter.LocalSetting.EnableChatGpt = false;
+                LMStudioCheck.IsChecked = false;
+                AICenter.LocalSetting.EnableLMStudio = false;
+            }
+
+            AICenter.SyncAIConfig();
+        }
+
+        private void ClaudeCheck_Click(object sender, RoutedEventArgs e)
+        {
+            if (ClaudeCheck.IsChecked == true)
+            {
+                AICenter.LocalSetting.EnableClaude = true;
+
+                ChatGptCheck.IsChecked = false;
+                AICenter.LocalSetting.EnableChatGpt = false;
+                GeminiCheck.IsChecked = false;
+                AICenter.LocalSetting.EnableGemini = false;
                 LMStudioCheck.IsChecked = false;
                 AICenter.LocalSetting.EnableLMStudio = false;
             }
@@ -74,6 +102,8 @@ namespace AiAssistant
             {
                 AICenter.LocalSetting.EnableLMStudio = true;
 
+                ClaudeCheck.IsChecked = false;
+                AICenter.LocalSetting.EnableClaude = false;
                 ChatGptCheck.IsChecked = false;
                 AICenter.LocalSetting.EnableChatGpt = false;
                 GeminiCheck.IsChecked = false;
@@ -92,7 +122,7 @@ namespace AiAssistant
         {
             try
             { 
-                AICenter.LocalSetting.ChatGptKey = AICenter.XOREncrypt(Encoding.UTF8.GetBytes(ChatGptKey.Text));
+                AICenter.LocalSetting.ChatGptKey = Encoding.UTF8.GetBytes(ChatGptKey.Text);
             }
             catch { }
 
@@ -113,7 +143,23 @@ namespace AiAssistant
         {
             try
             {
-                AICenter.LocalSetting.GeminiKey = AICenter.XOREncrypt(Encoding.UTF8.GetBytes(GeminiKey.Text));
+                AICenter.LocalSetting.GeminiKey = Encoding.UTF8.GetBytes(GeminiKey.Text);
+            }
+            catch { }
+
+            AICenter.SyncAIConfig();
+        }
+
+        private void ClaudeModel_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            AICenter.LocalSetting.ClaudeModel = ClaudeModel.Text;
+        }
+
+        private void ClaudeKey_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            try
+            {
+                AICenter.LocalSetting.ClaudeKey = Encoding.UTF8.GetBytes(ClaudeKey.Text);
             }
             catch { }
 
@@ -124,5 +170,9 @@ namespace AiAssistant
         {
             AICenter.LocalSetting.LMStudioPort = ConvertHelper.ObjToInt(LMPort.Text);
         }
+
+       
+
+      
     }
 }
