@@ -59,8 +59,6 @@ namespace AiAssistant
 
                         do
                         {
-                            NextCall:
-
                             string AiReply = "";
 
                             if (AICenter.Claude != null)
@@ -133,10 +131,8 @@ namespace AiAssistant
 
                             if (Result.Action.Equals("CaptureScreenToBase64"))
                             {
-                                //Action Intercept.
                                 NeedImage = true;
                                 Base64Img = ConvertHelper.ObjToStr(Result.ReturnValue);
-                                goto NextCall;
                             }
                             else
                             {
@@ -288,6 +284,10 @@ namespace AiAssistant
             {
                 Pipe.RequestUnit.Enable = true;
             }
+            if (AICenter.LocalSetting.EnableCaptureUnit)
+            {
+                Pipe.CaptureUnit.Enable = true;
+            }
 
             SyncSandBox();
             SyncUnitConfig();
@@ -360,7 +360,19 @@ namespace AiAssistant
                                                 StateLight.Fill = new SolidColorBrush(Colors.Black);
                                             }
                                         }
-                                        break;
+                                    break;
+                                    case "CaptureUnit":
+                                        {
+                                            if (Pipe.CaptureUnit.Enable)
+                                            {
+                                                StateLight.Fill = new SolidColorBrush(Colors.Blue);
+                                            }
+                                            else
+                                            {
+                                                StateLight.Fill = new SolidColorBrush(Colors.Black);
+                                            }
+                                        }
+                                    break;
                                 }
                             }
                         }
@@ -432,6 +444,22 @@ namespace AiAssistant
                                         StateLight.Fill = new SolidColorBrush(Colors.Blue);
                                         Pipe.RequestUnit.Enable = true;
                                         AICenter.LocalSetting.EnableRequestUnit = true;
+                                    }
+                                }
+                            break;
+                            case "CaptureUnit":
+                                {
+                                    if (Pipe.CaptureUnit.Enable)
+                                    {
+                                        StateLight.Fill = new SolidColorBrush(Colors.Black);
+                                        Pipe.CaptureUnit.Enable = false;
+                                        AICenter.LocalSetting.EnableCaptureUnit = false;
+                                    }
+                                    else
+                                    {
+                                        StateLight.Fill = new SolidColorBrush(Colors.Blue);
+                                        Pipe.CaptureUnit.Enable = true;
+                                        AICenter.LocalSetting.EnableCaptureUnit = true;
                                     }
                                 }
                             break;

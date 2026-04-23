@@ -45,6 +45,16 @@
                 </StackPanel>
             </Border>
 
+            <Border CornerRadius="9" Background="#FF525252" Cursor="Hand" Margin="5 0 0 0" PreviewMouseDown="UnitClick">
+                <StackPanel Orientation="Horizontal" Margin="10 0 10 0">
+                    <Ellipse Width="5" Height="5" Fill="Black">
+                    </Ellipse>
+                    <Label Foreground="White" VerticalAlignment="Center" HorizontalAlignment="Center">
+                        CaptureUnit
+                    </Label>
+                </StackPanel>
+            </Border>
+
             <Border Height="25" CornerRadius="5" Background="#FF0782C7"  VerticalAlignment="Center" Margin="5 0 0 0" Cursor="Hand" PreviewMouseDown="ShowAIConfig">
 
                 <Label HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="White">
