@@ -81,7 +81,7 @@ namespace AiAssistant.Platform
 
     public class ClaudeApi
     {
-        public string Model { get; set; } = "claude-sonnet-4-5-20250929";
+        public string Model { get; set; } = "";
         public string ApiKey { get; set; } = "";
         public WebProxy ProxyRef { get; set; } = null;
 
@@ -122,8 +122,6 @@ namespace AiAssistant.Platform
             try { return JsonConvert.DeserializeObject<ClaudeResponse>(result); }
             catch { return null; }
         }
-
-        // ── 文本查询 ──────────────────────────────────────────────────────────
 
         public string QueryAI(string prompt, string systemPrompt = null)
         {

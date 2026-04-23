@@ -116,7 +116,7 @@
     <Compile Include="ExecuteSandbox\Sandbox.cs" />
     <Compile Include="FileManagement\DataHelper.cs" />
     <Compile Include="Platform\ChatGptApi.cs" />
-    <Compile Include="Platform\ClaudeAPI.cs" />
+    <Compile Include="Platform\ClaudeApi.cs" />
     <Compile Include="Platform\GeminiApi.cs" />
     <Compile Include="Platform\LMStudio.cs" />
     <Compile Include="Request\HttpHelper.cs" />
