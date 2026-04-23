@@ -54,28 +54,65 @@ namespace AiAssistant
                         int RetryCount = 0;
                         const int MaxRetry = 10;
 
+                        bool NeedImage = false;
+                        string Base64Img = "";
+
                         do
                         {
+                            NextCall:
+
                             string AiReply = "";
 
                             if (AICenter.Claude != null)
                             {
-                                AiReply = AICenter.Claude.QueryAI(Prompt);
+                                if (NeedImage)
+                                {
+                                    AiReply = AICenter.Claude.QueryAIWithImage(Prompt,Base64Img, "image/jpeg");
+                                }
+                                else
+                                {
+                                    AiReply = AICenter.Claude.QueryAI(Prompt);
+                                }
+                                    
                                 SetLog("Claude", AiReply);
                             }
                             else if (AICenter.Gemini != null)
                             {
-                                AiReply = AICenter.Gemini.QueryAI(Prompt);
+                                if (NeedImage)
+                                {
+                                    AiReply = AICenter.Gemini.QueryAIWithImage(Prompt, Base64Img, "image/jpeg");
+                                }
+                                else
+                                {
+                                    AiReply = AICenter.Gemini.QueryAI(Prompt);
+                                }
+                                    
                                 SetLog("Gemini", AiReply);
                             }
                             else if (AICenter.ChatGpt != null)
                             {
-                                AiReply = AICenter.ChatGpt.QueryAI(Prompt);
+                                if (NeedImage)
+                                {
+                                    AiReply = AICenter.ChatGpt.QueryAIWithImage(Prompt, Base64Img, "image/jpeg");
+                                }
+                                else
+                                {
+                                    AiReply = AICenter.ChatGpt.QueryAI(Prompt);
+                                }
+                                    
                                 SetLog("ChatGpt", AiReply);
                             }
                             else if (AICenter.LocalAI != null)
                             {
-                                AiReply = AICenter.LocalAI.QueryAI(Prompt);
+                                if (NeedImage)
+                                {
+                                    AiReply = AICenter.LocalAI.QueryAIWithImage(Prompt, Base64Img, "image/jpeg");
+                                }
+                                else
+                                {
+                                    AiReply = AICenter.LocalAI.QueryAI(Prompt);
+                                }
+                                    
                                 SetLog("LocalAI", AiReply);
                             }
 
@@ -93,6 +130,19 @@ namespace AiAssistant
                             }
 
                             ExecutionResult Result = Pipe.AnalysisAndExecuteCapabilities(AiReply);
+
+                            if (Result.Action.Equals("CaptureScreenToBase64"))
+                            {
+                                //Action Intercept.
+                                NeedImage = true;
+                                Base64Img = ConvertHelper.ObjToStr(Result.ReturnValue);
+                                goto NextCall;
+                            }
+                            else
+                            {
+                                Base64Img = "";
+                            }
+
                             SetLog("ExecutionResult", JsonConvert.SerializeObject(Result));
 
                             if (!Result.Continue)

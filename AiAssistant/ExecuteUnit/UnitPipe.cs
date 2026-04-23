@@ -18,6 +18,7 @@ namespace AiAssistant.ExecuteUnit
         public MouseUnit MouseUnit = new MouseUnit();
         public RequestUnit RequestUnit = new RequestUnit();
         public CSharpCodeUnit CSharpUnit = new CSharpCodeUnit();
+        public CaptureUnit CaptureUnit = new CaptureUnit();
 
         #endregion
 
@@ -79,6 +80,7 @@ namespace AiAssistant.ExecuteUnit
             if (MouseUnit.Enable) AllCapabilities.AddRange(MouseUnit.CapabilityManifest);
             if (RequestUnit.Enable) AllCapabilities.AddRange(RequestUnit.CapabilityManifest);
             if (CSharpUnit.Enable) AllCapabilities.AddRange(CSharpCodeUnit.CapabilityManifest);
+            if (CaptureUnit.Enable) AllCapabilities.AddRange(CaptureUnit.CapabilityManifest);
             return AllCapabilities;
         }
 
@@ -466,6 +468,30 @@ namespace AiAssistant.ExecuteUnit
                 {
                     case "RunCSharpCode":
                         return CSharpUnit.RunCSharpCode(Params["Code"]?.Value<string>());
+                }
+            }
+
+            //---- CaptureUnit ----
+            if (CSharpCodeUnit.CapabilityManifest.Any(Cap => Cap.Name == ActionName))
+            {
+                switch (ActionName)
+                {
+                    case "CaptureScreenToBase64":
+                        {
+                            int Quality = 90;
+
+                            if (Params["Quality"] != null)
+                            {
+                                try 
+                                {
+                                    Quality = Params["Quality"].Value<int>();
+                                } 
+                                catch { }
+                            }
+                            
+                            return CaptureUnit.CaptureScreenToBase64(Quality);
+                        }
+                       
                 }
             }
 

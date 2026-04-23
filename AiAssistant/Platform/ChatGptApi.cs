@@ -124,7 +124,7 @@ namespace AiAssistant.Platform
             }
         }
 
-        private string QueryAIWithImage(string text, string base64, string mimeType)
+        public string QueryAIWithImage(string text, string base64, string mimeType)
         {
             var Item = new ChatGptItem
             {

@@ -108,6 +108,7 @@
     <Compile Include="AI\AICenter.cs" />
     <Compile Include="ConvertManagement\ConvertHelper.cs" />
     <Compile Include="DeFine.cs" />
+    <Compile Include="ExecuteUnit\CaptureUnit.cs" />
     <Compile Include="ExecuteUnit\CSharpCodeUnit.cs" />
     <Compile Include="ExecuteUnit\MouseUnit.cs" />
     <Compile Include="ExecuteUnit\RequestUnit.cs" />

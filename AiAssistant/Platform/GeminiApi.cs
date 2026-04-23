@@ -91,7 +91,7 @@ namespace AiAssistant.Platform
             this.ProxyRef = Proxy;
         }
 
-        private string QueryAIWithImage(string text, string base64, string mimeType)
+        public string QueryAIWithImage(string text, string base64, string mimeType)
         {
             var Content = new GeminiContent();
 

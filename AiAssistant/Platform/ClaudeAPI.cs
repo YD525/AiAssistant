@@ -133,7 +133,7 @@ namespace AiAssistant.Platform
             return ExtractText(result);
         }
 
-        private string QueryAIWithImage(string text, string base64, string mimeType, string systemPrompt = null)
+        public string QueryAIWithImage(string text, string base64, string mimeType, string systemPrompt = null)
         {
             var item = new ClaudeItem(Model) { system = systemPrompt };
             item.messages.Add(new ClaudeMessage("user", text, base64, mimeType));

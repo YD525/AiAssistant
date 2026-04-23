@@ -29,6 +29,8 @@ namespace AiAssistant.AI
         public bool EnableMouseUnit { get; set; } = false;
         public bool EnableRequestUnit { get; set; } = true;
 
+        public bool EnableCaptureUnit { get; set; } = true;
+
         public string GetChatGptKey()
         {
             if (ChatGptKey != null && ChatGptKey.Length > 0)
@@ -67,6 +69,7 @@ namespace AiAssistant.AI
                 EnableMouseUnit = this.EnableMouseUnit,
                 EnableCSharpCodeUnit = this.EnableCSharpCodeUnit,
                 EnableRequestUnit = this.EnableRequestUnit,
+                EnableCaptureUnit = this.EnableCaptureUnit,
                 LMStudioPort = this.LMStudioPort,
                 ChatGptModel = this.ChatGptModel,
                 GeminiModel = this.GeminiModel,
