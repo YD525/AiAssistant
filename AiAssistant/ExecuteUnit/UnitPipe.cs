@@ -146,6 +146,15 @@ namespace AiAssistant.ExecuteUnit
                 Builder.AppendLine("## C# SCRIPT STYLE");
                 Builder.AppendLine("- Top-level statements only (no class, no Main method).");
                 Builder.AppendLine("- Pre-imported: System, System.IO, System.Linq, System.Collections.Generic,");
+                Builder.AppendLine("- ALL 'using' directives MUST be placed at the top of the script before any other code.");
+
+
+                // ── 7.1 AVAILABLE NAMESPACES ──────────────────────────────────────────────
+                Builder.AppendLine("## C# AVAILABLE NAMESPACES");
+                Builder.AppendLine("The following namespaces are available in this process.");
+                Builder.AppendLine("Only use 'using' directives from this list — anything else will cause a compile error:");
+                Builder.AppendLine(CSharpUnit.GetAvailableNamespaces()?.ToString());
+                Builder.AppendLine();
             }
 
             Builder.AppendLine();

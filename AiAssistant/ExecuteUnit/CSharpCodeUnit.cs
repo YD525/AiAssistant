@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
+using System.Text.RegularExpressions;
 using AiAssistant.ExecuteSandbox;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Scripting;
@@ -69,6 +69,61 @@ namespace AiAssistant.ExecuteUnit
 
         #region Code Execution
 
+        public string GetAvailableNamespaces()
+        {
+            var Whitelist = new[]
+            {
+        "System",
+        "System.IO",
+        "System.IO.Compression",
+        "System.Linq",
+        "System.Text",
+        "System.Text.RegularExpressions",
+        "System.Collections.Generic",
+        "System.Collections.Concurrent",
+        "System.Threading",
+        "System.Threading.Tasks",
+        "System.Diagnostics",
+        "System.Reflection",
+        "System.Net",
+        "System.Net.Http",
+        "System.Net.Sockets",
+        "System.Net.Mail",
+        "System.Net.NetworkInformation",
+        "System.Runtime.InteropServices",
+        "System.Security.Cryptography",
+        "System.Xml",
+        "System.Xml.Linq",
+        "System.Data",
+        "System.Data.SqlClient",
+        "System.Drawing",
+        "System.Windows.Forms",
+        "System.Timers",
+        "System.Environment",
+        "System.Math",
+        "System.Convert",
+        "Newtonsoft.Json",
+        "Newtonsoft.Json.Linq",
+        "Microsoft.Win32",
+    };
+            var LoadedNamespaces = AppDomain.CurrentDomain.GetAssemblies()
+                .Where(a => !a.IsDynamic && !string.IsNullOrEmpty(a.Location))
+                .SelectMany(a =>
+                {
+                    try { return a.GetTypes(); }
+                    catch { return new Type[0]; }
+                })
+                .Select(t => t.Namespace)
+                .Where(n => !string.IsNullOrEmpty(n))
+                .ToHashSet();
+
+            var Available = Whitelist
+                .Where(n => LoadedNamespaces.Contains(n))
+                .ToList();
+
+            return string.Join("\n", Available);
+        }
+
         public object RunCSharpCode(string Code)
         {
             return Sandbox.Exec(nameof(RunCSharpCode), () =>
@@ -86,12 +141,21 @@ namespace AiAssistant.ExecuteUnit
                 "System.Text", "System.Threading.Tasks", "System.Diagnostics"
             };
 
+                    var UsingMatches = Regex.Matches(Code, @"using\s+([\w\.]+)\s*;");
+                    var ExtraImports = UsingMatches.Cast<Match>()
+                        .Select(m => m.Groups[1].Value)
+                        .Where(ns => !string.IsNullOrEmpty(ns))
+                        .ToList();
+
+                    string CleanCode = Regex.Replace(Code, @"using\s+[\w\.]+\s*;\s*", "").Trim();
+
+                    var AllImports = DefaultImports.Concat(ExtraImports).Distinct().ToArray();
+
                     var Options = ScriptOptions.Default
-                        .WithImports(DefaultImports)
+                        .WithImports(AllImports)
                         .WithReferences(References);
 
-                    string WrappedCode = $"new Func<object>(() => {{ {Code} }})()";
-
+                    string WrappedCode = $"new Func<object>(() => {{ {CleanCode} }})()";
                     var Script = CSharpScript.Create<object>(WrappedCode, Options);
                     var ScriptTask = Script.RunAsync();
                     ScriptTask.Wait();
@@ -100,7 +164,6 @@ namespace AiAssistant.ExecuteUnit
                         throw new Exception($"[ERROR] {JsonConvert.SerializeObject(ScriptTask.Exception, Formatting.Indented)}");
 
                     var ReturnValue = ScriptTask.Result.ReturnValue;
-
                     if (ReturnValue == null)
                         return null;
                     else if (ReturnValue is string s)
