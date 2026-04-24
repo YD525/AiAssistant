@@ -16,7 +16,7 @@ namespace AiAssistant.AI
 
         public string ChatGptModel { get; set; } = "gpt-4.1-nano";
         public string GeminiModel { get; set; } = "gemini-2.5-flash";
-        public string ClaudeModel { get; set; } = "claude-sonnet-4-5-20250929";
+        public string ClaudeModel { get; set; } = "claude-opus-4-7";
 
         public byte[] ChatGptKey { get; set; }
         public byte[] GeminiKey { get; set; }
